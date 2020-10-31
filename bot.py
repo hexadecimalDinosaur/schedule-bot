@@ -15,13 +15,13 @@ def getDay(year,month,day):
     quad4 = datetime.datetime(2021,4,23)
     start = None
     day = 4
-    if date > quad4:
+    if date >= quad4:
         start = quad4
-    elif date > quad3:
+    elif date >= quad3:
         start = quad3
-    elif date > quad2:
+    elif date >= quad2:
         start = quad2
-    elif date > quad1:
+    elif date >= quad1:
         start = quad1
     while True:
         if start.strftime("%Y-%m-%d") in exclude:
@@ -35,6 +35,21 @@ def getDay(year,month,day):
         if start == date:
             return day
         start += datetime.timedelta(days=1)
+
+def getQuad(year,month,day):
+    quad1 = datetime.datetime(2020,9,17)
+    quad2 = datetime.datetime(2020,11,23)
+    quad3 = datetime.datetime(2021,2,8)
+    quad4 = datetime.datetime(2021,4,23)
+    date = datetime.datetime(year,month,day)
+    if date >= quad4:
+        return 4
+    elif date >= quad3:
+        return 3
+    elif date >= quad2:
+        return 2
+    elif date >= quad1:
+        return 1
 
 data = {}
 with open("data.json") as f:
@@ -115,6 +130,51 @@ async def on_message(message):
             data['users'][str(message.author.id)]['courses'].remove(content[1].upper())
             updateFile()
             await message.channel.send(str(message.author)+" has left "+content[1].upper())
+    
+    elif message.content.startswith('$day'):
+        content = message.content.split()
+        date = datetime.datetime.today()
+        date = [date.year,date.month,date.day]
+        if len(content) > 1:
+            try:
+                date = datetime.datetime.strptime(content[1],'%Y-%m-%d')
+                date = [date.year,date.month,date.day]
+            except ValueError:
+                try:
+                    date = datetime.datetime.strptime(content[1],'%Y/%m/%d')
+                    date = [date.year,date.month,date.day]
+                except ValueError:
+                    await message.channel.send("Please specify dates in `YYYY/MM/DD` or `YYYY-MM-DD`")
+                    return
+        quad = getQuad(date[0],date[1],date[2])
+        day = getDay(date[0],date[1],date[2])
+        if day == 'weekend':
+            await message.channel.send("It's the weekend! No classes!")
+        elif day == 'holiday':
+            await message.channel.send("It's a PA day or holiday! No classes!")
+        else:
+            output = ""
+            for i in data['users'][str(message.author.id)]['courses']:
+                if data['courses'][i]['quad'] == quad:
+                    output += i + " (" + data['courses'][i]['teacher'] + ") - "
+                    if data['courses'][i]['in-school'] == day:
+                        output += "In-School\n"
+                    elif data['courses'][i]['independent'] == day:
+                        output += "Independent Learning\n"
+                    else:
+                        output += "Online Afternoon Class\n"
+            if output == "":
+                await message.channel.send("<@"+str(message.author.id)+"> you are not in any classes for quad "+str(quad)+". Join your courses using the `$join` command")
+                return
+            if len(str(date[1])) < 2:
+                date[1] = "0"+str(date[1])
+            if len(str(date[2])) < 2:
+                date[2] = "0"+str(date[2])
+            embed=discord.Embed(color=0x0160a7, title="{}/{}/{} - Quad {}".format(date[0],date[1],date[2],quad), description=output)
+            embed.set_author(name=str(message.author),icon_url=message.author.avatar_url)
+            await message.channel.send(embed=embed)
+        
+        
 
 token = ""
 with open("token") as f:
