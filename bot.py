@@ -40,6 +40,10 @@ data = {}
 with open("data.json") as f:
     data = json.load(f)
 
+def updateFile():
+    with open("data.json",'w') as f:
+        json.dump(data,f, indent=4)
+
 client = discord.Client()
 
 @client.event
@@ -55,9 +59,9 @@ async def on_message(message):
         await message.channel.send('<:ping_pong:772097617932320768> Pong! `{0}ms`'.format(int(client.latency*1000)))
     
     elif message.content.startswith('$schedule'):
-        if str(message.author) in list(data['users'].keys()) and len(data['users'][str(message.author)]['courses']) > 0:
+        if str(message.author.id) in list(data['users'].keys()) and len(data['users'][str(message.author.id)]['courses']) > 0:
             quads = ["","","",""]
-            for i in data['users'][str(message.author)]['courses']:
+            for i in data['users'][str(message.author.id)]['courses']:
                 quads[data["courses"][i]["quad"]-1] += str(i+" - "+data["courses"][i]["teacher"]+"\n")
             embed=discord.Embed(color=0x0160a7)
             embed.set_author(name=str(message.author), icon_url=message.author.avatar_url)
@@ -79,6 +83,38 @@ async def on_message(message):
         embed = discord.Embed(title="Courses", description=output, color=0x0160a7)
         embed.set_footer(text="Use the $join command to join a course")
         await message.channel.send(embed=embed)
-            
+    
+    elif message.content.startswith('$join'):
+        content = message.content.split()
+        if len(content) < 2:
+            await message.channel.send("Please specify a course to join")
+        elif content[1].upper() not in set(data['courses'].keys()):
+            await message.channel.send("Please specify a course in the course list which can be viewed with `$list`. If your course is not there contact an admin")
+        else:
+            if str(message.author.id) not in set(data['users'].keys()):
+                data['users'][str(message.author.id)] = {}
+                data['users'][str(message.author.id)]['courses'] = []
+            if content[1].upper() in set(data['users'][str(message.author.id)]['courses']):
+                await message.channel.send(str(message.author)+" is already in "+content[1].upper())
+                return
+            data['users'][str(message.author.id)]['courses'].append(content[1].upper())
+            updateFile()
+            await message.channel.send(str(message.author)+" has been added to " + content[1].upper())
+    
+    elif message.content.startswith('$leave'):
+        content = message.content.split()
+        if len(content) < 2:
+            await message.channel.send("Please specify a course to leave")
+        elif str(message.author.id) not in set(data['users'].keys()):
+            await message.channel.send("You are not in any courses currently")
+        elif len(data['users'][str(message.author.id)]['courses']) == 0:
+            await message.channel.send("You are not in any courses currently")
+        elif content[1].upper() not in set(data['users'][str(message.author.id)]['courses']):
+            await message.chennel.send("You are not in "+content[1].upper())
+        else:
+            data['users'][str(message.author.id)]['courses'].remove(content[1].upper())
+            updateFile()
+            await message.channel.send(str(message.author)+" has left "+content[1].upper())
 
-client.run('TOKEN')
+
+client.run('NzcxOTI3NDY2MjY3NzcwOTEw.X5zPeQ.chTpnM07YQyM3VbevSwoGrSXQnM')
