@@ -63,17 +63,27 @@ client = discord.Client()
 
 @client.event
 async def on_ready():
-    print('We have logged in as {0.user}'.format(client))
+    print('Logged in as {0.user}'.format(client))
 
 @client.event
 async def on_message(message):
     if message.author == client.user:
         return
     
-    if message.content.startswith('$ping'):
+    if message.content.lower().startswith('$ping'):
         await message.channel.send('<:ping_pong:772097617932320768> Pong! `{0}ms`'.format(int(client.latency*1000)))
     
-    elif message.content.startswith('$schedule'):
+    elif message.content.lower().startswith('$about'):
+        embed=discord.Embed(title="Schedule Bot", url="https://github.com/UserBlackBox/schedule-bot", description="Discord bot for timetable information based on the TDSB 2020 quadmester model", color=0x0160a7)
+        embed.set_thumbnail(url="https://cdn.discordapp.com/avatars/771927466267770910/700c2fe2da53caf2a60041e7d2bf21b4.png?size=2048")
+        await message.channel.send(embed=embed)
+
+    elif message.content.lower().startswith('$help'):
+        helpMessage = "`$list` - list all joinable courses\n`$join [code]` - add a course to your schedule\n`$leave [code]` - remove a course from your schedule\n`$schedule` - view your courses\n`$day` - view your schedule for today\n`$day YYYY/MM/DD` - view your schedule on a specific day"
+        embed=discord.Embed(title="Commands", description=helpMessage, color=0x0160a7)
+        await message.channel.send(embed=embed)
+
+    elif message.content.lower().startswith('$schedule'):
         if str(message.author.id) in list(data['users'].keys()) and len(data['users'][str(message.author.id)]['courses']) > 0:
             quads = ["","","",""]
             for i in data['users'][str(message.author.id)]['courses']:
@@ -87,7 +97,7 @@ async def on_message(message):
         else:
             await message.channel.send("**" + str(message.author)+"** does not have their courses added to the bot")
     
-    elif message.content.startswith('$list'):
+    elif message.content.lower().startswith('$list'):
         output = ""
         for i in sorted(list(data['courses'].keys())):
             output += i
@@ -99,7 +109,7 @@ async def on_message(message):
         embed.set_footer(text="Use the $join command to join a course")
         await message.channel.send(embed=embed)
     
-    elif message.content.startswith('$join'):
+    elif message.content.lower().startswith('$join'):
         content = message.content.split()
         if len(content) < 2:
             await message.channel.send("Please specify a course to join")
@@ -116,7 +126,7 @@ async def on_message(message):
             updateFile()
             await message.channel.send(str(message.author)+" has been added to " + content[1].upper())
     
-    elif message.content.startswith('$leave'):
+    elif message.content.lower().startswith('$leave'):
         content = message.content.split()
         if len(content) < 2:
             await message.channel.send("Please specify a course to leave")
@@ -131,7 +141,7 @@ async def on_message(message):
             updateFile()
             await message.channel.send(str(message.author)+" has left "+content[1].upper())
     
-    elif message.content.startswith('$day'):
+    elif message.content.lower().startswith('$day'):
         content = message.content.split()
         date = datetime.datetime.today()
         date = [date.year,date.month,date.day]
@@ -174,7 +184,7 @@ async def on_message(message):
             embed.set_author(name=str(message.author),icon_url=message.author.avatar_url)
             await message.channel.send(embed=embed)
         
-        
+    
 
 token = ""
 with open("token") as f:
