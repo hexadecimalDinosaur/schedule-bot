@@ -117,4 +117,4 @@ async def on_message(message):
             await message.channel.send(str(message.author)+" has left "+content[1].upper())
 
 
-client.run('NzcxOTI3NDY2MjY3NzcwOTEw.X5zPeQ.chTpnM07YQyM3VbevSwoGrSXQnM')
+client.run('TOKEN')
