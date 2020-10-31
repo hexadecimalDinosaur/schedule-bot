@@ -116,5 +116,8 @@ async def on_message(message):
             updateFile()
             await message.channel.send(str(message.author)+" has left "+content[1].upper())
 
+token = ""
+with open("token") as f:
+    token = f.read().strip()
 
-client.run('TOKEN')
+client.run(token)
