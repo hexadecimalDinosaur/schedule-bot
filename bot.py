@@ -79,11 +79,11 @@ async def on_message(message):
         await message.channel.send(embed=embed)
 
     elif message.content.lower().startswith('$help'):
-        helpMessage = "`$list` - list all joinable courses\n`$join [code]` - add a course to your schedule\n`$leave [code]` - remove a course from your schedule\n`$schedule` - view your courses\n`$day` - view your schedule for today\n`$day YYYY/MM/DD` - view your schedule on a specific day"
+        helpMessage = "`$list` - list all joinable courses\n`$join [code]` - add a course to your schedule\n`$leave [code]` - remove a course from your schedule\n`$courses` - view your courses\n`$schedule` - view your schedule for today\n`$schedule YYYY/MM/DD` - view your schedule on a specific day"
         embed=discord.Embed(title="Commands", description=helpMessage, color=0x0160a7)
         await message.channel.send(embed=embed)
 
-    elif message.content.lower().startswith('$schedule'):
+    elif message.content.lower().startswith('$courses'):
         if str(message.author.id) in list(data['users'].keys()) and len(data['users'][str(message.author.id)]['courses']) > 0:
             quads = ["","","",""]
             for i in data['users'][str(message.author.id)]['courses']:
@@ -141,7 +141,7 @@ async def on_message(message):
             updateFile()
             await message.channel.send(str(message.author)+" has left "+content[1].upper())
     
-    elif message.content.lower().startswith('$day'):
+    elif message.content.lower().startswith('$schedule'):
         content = message.content.split()
         date = datetime.datetime.today()
         date = [date.year,date.month,date.day]
@@ -184,7 +184,61 @@ async def on_message(message):
             embed.set_author(name=str(message.author),icon_url=message.author.avatar_url)
             await message.channel.send(embed=embed)
         
-    
+    elif message.content.lower().startswith('$addcourse'):
+        if not message.author.permissions_in(message.channel).administrator:
+            await message.channel.send("<@"+message.author.id+"> this command is restricted to server admins")
+        else:
+            content = message.content.split()
+            if len(content) < 5:
+                await message.channel.send("This command has 4 arguments `$addcourse [code] [quad] [teacher] [days]`")
+                return
+            else:
+                if content[1].upper() in set(data['courses'].keys()):
+                    await message.channel.send(content[1].upper() + " already exists")
+                    return
+                if not content[2].isdigit():
+                    await message.channel.send("Quadmester must be an integer")
+                    return
+                if len(content[4]) != 4:
+                    await message.channel.send("Days should be for letters, `s` for in school, `o` for online, `i` for independent")
+                data['courses'][content[1].upper()] = {}
+                independent = 0
+                online = []
+                school = 0
+                for i in range(4):
+                    if content[4][i] == 's':
+                        school = i+1
+                    if content[4][i] == 'o':
+                        online.append(i+1)
+                    if content[4][i] == 'i':
+                        independent = i+1
+                data['courses'][content[1].upper()]['in-school'] = school
+                data['courses'][content[1].upper()]['online'] = online
+                data['courses'][content[1].upper()]['independent'] = independent
+                data['courses'][content[1].upper()]['teacher'] = content[3]
+                data['courses'][content[1].upper()]['quad'] = int(content[2])
+                updateFile()
+                await message.channel.send(content[1].upper() + " has been created")
+
+    elif message.content.lower().startswith('$delcourse'):
+        if not message.author.permissions_in(message.channel).administrator:
+            await message.channel.send("<@"+message.author.id+"> this command is restricted to server admins")
+        else:
+            content = message.content.split()
+            if len(content) != 2:
+                await message.channel.send("This command has 1 argument: `$delcourse [code]`")
+                return
+            if content[1].upper() not in set(data['courses'].keys()):
+                await message.channel.send(content[1].upper() + " does not exist")
+                return
+            del data['courses'][content[1].upper()]
+            for i in data['users'].keys():
+                try:
+                    data['users'][i]['courses'].remove(content[1].upper())
+                except ValueError:
+                    pass
+            await message.channel.send(content[1].upper() + " has been deleted")
+            updateFile()
 
 token = ""
 with open("token") as f:
