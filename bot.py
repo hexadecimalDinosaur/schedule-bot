@@ -5,6 +5,8 @@ import datetime
 def getDay(year,month,day):
     date = datetime.datetime(year,month,day)
     exclude = set(['2020-10-12','2020-11-20','2020-12-21','2020-12-22','2020-12-23','2020-12-24','2020-12-25','2020-12-28','2020-12-29','2020-12-30','2020-12-31','2021-01-01','2021-02-05','2021-02-12','2021-02-15','2021-03-15','2021-03-16','2021-03-17','2021-03-18','2021-03-19','2021-04-02','2021-04-05','2021-05-24','2021-06-29','2021-07-01'])
+    if date >= datetime.datetime(2021,7,1):
+        return "end"
     if date.strftime("%a") == "Sun" or date.strftime("%a") == "Sat":
         return "weekend"
     if date.strftime("%Y-%m-%d") in exclude:
@@ -106,7 +108,7 @@ async def on_message(message):
             output += "\n"
         
         embed = discord.Embed(title="Courses", description=output, color=0x0160a7)
-        embed.set_footer(text="Use the $join command to join a course")
+        embed.set_footer(text="Use the $join command to join a course\nIf your course is not in this list contact an admin")
         await message.channel.send(embed=embed)
     
     elif message.content.lower().startswith('$join'):
@@ -162,6 +164,8 @@ async def on_message(message):
             await message.channel.send("It's the weekend! No classes!")
         elif day == 'holiday':
             await message.channel.send("It's a PA day or holiday! No classes!")
+        elif day == 'end':
+            await message.channel.send("That date is past the end of the year")
         else:
             output = ""
             for i in data['users'][str(message.author.id)]['courses']:
@@ -180,7 +184,7 @@ async def on_message(message):
                 date[1] = "0"+str(date[1])
             if len(str(date[2])) < 2:
                 date[2] = "0"+str(date[2])
-            embed=discord.Embed(color=0x0160a7, title="{}/{}/{} - Quad {}".format(date[0],date[1],date[2],quad), description=output)
+            embed=discord.Embed(color=0x0160a7, title="{}/{}/{} - Quad {} - Day {}".format(date[0],date[1],date[2],quad, day), description=output)
             embed.set_author(name=str(message.author),icon_url=message.author.avatar_url)
             await message.channel.send(embed=embed)
         
