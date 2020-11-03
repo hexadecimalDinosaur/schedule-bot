@@ -190,7 +190,7 @@ async def on_message(message):
         
     elif message.content.lower().startswith('$addcourse'):
         if not message.author.permissions_in(message.channel).administrator:
-            await message.channel.send("<@"+message.author.id+"> this command is restricted to server admins")
+            await message.channel.send("<@"+str(message.author.id)+"> this command is restricted to server admins")
         else:
             content = message.content.split()
             if len(content) < 5:
@@ -226,7 +226,7 @@ async def on_message(message):
 
     elif message.content.lower().startswith('$delcourse'):
         if not message.author.permissions_in(message.channel).administrator:
-            await message.channel.send("<@"+message.author.id+"> this command is restricted to server admins")
+            await message.channel.send("<@"+str(message.author.id)+"> this command is restricted to server admins")
         else:
             content = message.content.split()
             if len(content) != 2:
