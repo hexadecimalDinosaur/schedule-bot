@@ -144,6 +144,9 @@ async def on_message(message):
             await message.channel.send(str(message.author)+" has left "+content[1].upper())
     
     elif message.content.lower().startswith('$schedule'):
+        if str(message.author.id) not in set(data['users'].keys()):
+            await message.channel.send('<@'+str(message.author.id)+'> you are not in any courses, to view a list of courses use `$list` and use `$join` to join the course')
+            return
         content = message.content.split()
         date = datetime.datetime.today()
         date = [date.year,date.month,date.day]
