@@ -248,25 +248,26 @@ async def on_message(message):
             updateFile()
     elif message.content.lower().startswith('$addevent'):
         content = message.content.split()
-        await message.channel.send("Bad bitch")
-        # if len(content) < 6:
-        #     await message.channel.send("This command has 3 argument `$addevent [code] [quad] [teacher] [date] [event_title]")
-        # elif content[1].upper() not in set(data['users'][str(message.author.id)]['courses'].values()):
-        #     await message.channel.send("You are not in this class")
-        # else: 
-        #     date = datetime.datetime.today()
-        # date = [date.year,date.month,date.day]
-        # if len(content[3]) == 1:
-        #     try:
-        #         date = datetime.datetime.strptime(content[1],'%Y-%m-%d')
-        #         date = [date.year,date.month,date.day]
-        #     except ValueError:
-        #         try:
-        #             date = datetime.datetime.strptime(content[1],'%Y/%m/%d')
-        #             date = [date.year,date.month,date.day]
-        #         except ValueError:
-        #             await message.channel.send("Please specify dates in `YYYY/MM/DD` or `YYYY-MM-DD`")
-        #             return
+        if len(content) < 4:
+            await message.channel.send("This command has 3 argument `$addevent [code] [date] [event_title]")
+        elif content[1].upper() not in set(data['users'][str(message.author.id)]['courses'].values()):
+            await message.channel.send("You are not in this class")
+        else: 
+            if len(content[3]) > 1:
+                try:
+                    date = datetime.datetime.strptime(content[3],'%Y-%m-%d')
+                    date = [date.year,date.month,date.day]
+                except ValueError:
+                    try:
+                        date = datetime.datetime.strptime(content[3],'%Y/%m/%d')
+                        date = [date.year,date.month,date.day]
+                    except ValueError:
+                        await message.channel.send("Please specify dates in `YYYY/MM/DD` or `YYYY-MM-DD`")
+                        return
+            await message.channel.send("Well smth happened")
+            
+
+            
     
 
 token = ""
