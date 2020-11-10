@@ -54,11 +54,11 @@ def getQuad(year,month,day):
         return 1
 
 data = {}
-with open("data.json") as f:
+with open("data (1).json") as f:
     data = json.load(f)
 
 def updateFile():
-    with open("data.json",'w') as f:
+    with open("data (1).json",'w') as f:
         json.dump(data,f, indent=4)
 
 client = discord.Client()
@@ -101,10 +101,9 @@ async def on_message(message):
     
     elif message.content.lower().startswith('$list'):
         output = ""
-        for i in sorted(list(data['courses'].keys())):
+        for i in sorted(set(data['courses'].keys())):
             output += i
-            if data['courses'][i]['teacher']:
-                output += " ("+data['courses'][i]['teacher']+")"
+            output += " ("+data['courses'][i]['teacher']+")"
             output += "\n"
         
         embed = discord.Embed(title="Courses", description=output, color=0x0160a7)
@@ -224,6 +223,7 @@ async def on_message(message):
                 data['courses'][content[1].upper()]['independent'] = independent
                 data['courses'][content[1].upper()]['teacher'] = content[3]
                 data['courses'][content[1].upper()]['quad'] = int(content[2])
+                data['courses'][content[1].upper()]['events'] = {}
                 updateFile()
                 await message.channel.send(content[1].upper() + " has been created")
 
@@ -250,25 +250,61 @@ async def on_message(message):
         content = message.content.split()
         if len(content) < 4:
             await message.channel.send("This command has 3 argument `$addevent [code] [date] [event_title]")
-        elif content[1].upper() not in set(data['users'][str(message.author.id)]['courses'].values()):
+        elif content[1].upper() not in set(data['courses'].keys()):
+            await message.channel.send("This class does not exit. Contact your admin to add any new courses.")
+        elif content[1].upper() not in set(data['users'][str(message.author.id)]['courses']):
             await message.channel.send("You are not in this class")
         else: 
-            if len(content[3]) > 1:
+            if len(content[2]) > 1:
                 try:
-                    date = datetime.datetime.strptime(content[3],'%Y-%m-%d')
-                    date = [date.year,date.month,date.day]
+                    date = datetime.datetime.strptime(content[2],'%Y-%m-%d')
+                    if str(date) not in set(data['courses'][content[1].upper()]['events'].keys()):
+                        data['courses'][content[1].upper()]['events'][str(date)]= []
+                    event_title=""
+                    for i in range(3,len(content)):
+                        event_title+=content[i]+" "
+                    data['courses'][content[1].upper()]['events'][str(date)].append(event_title)
+                    updateFile()
+                        
                 except ValueError:
                     try:
-                        date = datetime.datetime.strptime(content[3],'%Y/%m/%d')
-                        date = [date.year,date.month,date.day]
+                        date = datetime.datetime.strptime(content[2],'%Y/%m/%d')
+                        if str(date) not in set(data['courses'][content[1].upper()]['events'].keys()):
+                            data['courses'][content[1].upper()]['events'][str(date)]= []
+                        event_title=""
+                        for i in range(3,len(content)):
+                            event_title+=content[i]+" "
+                        data['courses'][content[1].upper()]['events'][str(date)].append(event_title)
+                        updateFile()
                     except ValueError:
                         await message.channel.send("Please specify dates in `YYYY/MM/DD` or `YYYY-MM-DD`")
                         return
-            await message.channel.send("Well smth happened")
-            
+
+    elif message.content.lower().startswith('$getevents'):
+        content = message.content.split()
+        if len(content) < 2:
+            await message.channel.send("This command has 1 argument `$getevents [code]")
+        elif content[1].upper() not in set(data['courses'].keys()):
+            await message.channel.send("This class does not exit. Contact your admin to add any new courses.")
+        elif content[1].upper() not in set(data['users'][str(message.author.id)]['courses']):
+            await message.channel.send("You are not in this class")
+        else: 
+            if len(content[1]) > 1:
+                if len(set(data['courses'][content[1].upper()]['events'].keys())) == 0:
+                    await message.channel.send("There are no events for this date")
+                else: 
+                    output =""
+                    for i in set(data['courses'][content[1].upper()]['events'].keys()):
+                        date = i.split(" ")
+                        output+=date[0] +" : "
+                        for j in list(data['courses'][content[1].upper()]['events'][i]):
+                            output += j +", "
+                        output += "\n "
+                    embed = discord.Embed(title="Events", description=output, color=0x0160a7)
+                    embed.set_footer(text="Use the $addevent command to add upcoming tests, assignments, etc")
+                    await message.channel.send(embed=embed)
 
             
-    
 
 token = ""
 with open("token") as f:

@@ -1,0 +1,70 @@
+{
+    "courses": {
+        "SPH3UP-0B": {
+            "in-school": 4,
+            "online": [
+                1,
+                2
+            ],
+            "independent": 3,
+            "teacher": "Bouttell",
+            "quad": 1,
+            "events": {}
+        },
+        "SPH3UP-0A": {
+            "in-school": 3,
+            "online": [
+                1,
+                2
+            ],
+            "independent": 4,
+            "teacher": "Bouttell",
+            "quad": 1,
+            "events": {}
+        },
+        "HRT3M1-0B": {
+            "in-school": 2,
+            "online": [
+                3,
+                4
+            ],
+            "independent": 1,
+            "teacher": "Dash",
+            "quad": 1,
+            "events": {}
+        },
+        "MCR3UP-0B": {
+            "in-school": 2,
+            "online": [
+                3,
+                4
+            ],
+            "independent": 1,
+            "teacher": "Spiliopoulis",
+            "quad": 1,
+            "events": {
+                "2020-11-22 00:00:00": [
+                    "Test",
+                    "Financial Math Test "
+                ],
+                "2020-11-23 00:00:00": [
+                    "Financial Math Test "
+                ]
+            }
+        }
+    },
+    "users": {
+        "490941196642811904": {
+            "courses": [
+                "SPH3UP-0A",
+                "MCR3UP-0B"
+            ]
+        },
+        "404809245113057281": {
+            "courses": [
+                "SPH3UP-0B",
+                "HRT3M1-0B"
+            ]
+        }
+    }
+}
