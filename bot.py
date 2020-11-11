@@ -1,6 +1,7 @@
 import discord
 import json
 import datetime
+from event import Event
 
 def getDay(year,month,day):
     date = datetime.datetime(year,month,day)
@@ -246,6 +247,7 @@ async def on_message(message):
                     pass
             await message.channel.send(content[1].upper() + " has been deleted")
             updateFile()
+
     elif message.content.lower().startswith('$addevent'):
         content = message.content.split()
         if len(content) < 4:
@@ -302,9 +304,7 @@ async def on_message(message):
                         output += "\n "
                     embed = discord.Embed(title="Events", description=output, color=0x0160a7)
                     embed.set_footer(text="Use the $addevent command to add upcoming tests, assignments, etc")
-                    await message.channel.send(embed=embed)
-
-            
+                    await message.channel.send(embed=embed)  
 
 token = ""
 with open("token") as f:
