@@ -39,7 +39,7 @@ def getDay(year,month,day):
             return day
         start += datetime.timedelta(days=1)
 
-def getQuad(year,month,day):
+def getQuad(year=datetime.datetime.today().year,month=datetime.datetime.today().month,day=datetime.datetime.today().day):
     quad1 = datetime.datetime(2020,9,17)
     quad2 = datetime.datetime(2020,11,23)
     quad3 = datetime.datetime(2021,2,8)
@@ -82,7 +82,7 @@ async def on_message(message):
         await message.channel.send(embed=embed)
 
     elif message.content.lower().startswith('$help'):
-        helpMessage = "`$list` - list all joinable courses\n`$join [code]` - add a course to your schedule\n`$leave [code]` - remove a course from your schedule\n`$courses` - view your courses\n`$schedule` - view your schedule for today\n`$schedule YYYY/MM/DD` - view your schedule on a specific day"
+        helpMessage = "`$list` - list all joinable courses for this quad\n`$list [quad]` - list joinable courses for specific quad\n`$join [code]` - add a course to your schedule\n`$leave [code]` - remove a course from your schedule\n`$courses` - view your courses\n`$schedule` - view your schedule for today\n`$schedule YYYY/MM/DD` - view your schedule on a specific day"
         embed=discord.Embed(title="Commands", description=helpMessage, color=0x0160a7)
         await message.channel.send(embed=embed)
 
@@ -101,14 +101,20 @@ async def on_message(message):
             await message.channel.send("**" + str(message.author)+"** does not have their courses added to the bot")
     
     elif message.content.lower().startswith('$list'):
+        content = message.content.split()
+        quad = getQuad()
+        if len(content) == 2 and content[1].isdigit() and content[1] in ["1","2","3","4"]:
+            quad = int(content[1])
         output = ""
         for i in sorted(list(data['courses'].keys())):
-            output += i
-            if data['courses'][i]['teacher']:
-                output += " ("+data['courses'][i]['teacher']+")"
-            output += "\n"
-        
-        embed = discord.Embed(title="Courses", description=output, color=0x0160a7)
+            if data['courses'][i]['quad'] == quad:
+                output += i
+                if data['courses'][i]['teacher']:
+                    output += " ("+data['courses'][i]['teacher']+")"
+                output += "\n"
+        if len(output) == 0:
+            output += "No courses have been added for quadmester {0} yet".format(str(quad))
+        embed = discord.Embed(title="Quad {0} Courses".format(str(quad)), description=output, color=0x0160a7)
         embed.set_footer(text="Use the $join command to join a course\nIf your course is not in this list contact an admin")
         await message.channel.send(embed=embed)
     

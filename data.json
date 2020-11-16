@@ -1,8 +1,57 @@
 {
     "courses": {
-
+        "SPH3UP-0B": {
+            "in-school": 4,
+            "online": [
+                1,
+                2
+            ],
+            "independent": 3,
+            "teacher": "Bouttell",
+            "quad": 1
+        },
+        "SPH3UP-0A": {
+            "in-school": 3,
+            "online": [
+                1,
+                2
+            ],
+            "independent": 4,
+            "teacher": "Bouttell",
+            "quad": 1
+        },
+        "HRT3M1-0B": {
+            "in-school": 2,
+            "online": [
+                3,
+                4
+            ],
+            "independent": 1,
+            "teacher": "Dash",
+            "quad": 1
+        },
+        "MCR3UP-0B": {
+            "in-school": 2,
+            "online": [
+                3,
+                4
+            ],
+            "independent": 1,
+            "teacher": "Spiliopoulis",
+            "quad": 1
+        }
     },
     "users": {
-
+        "490941196642811904": {
+            "courses": [
+                "SPH3UP-0A"
+            ]
+        },
+        "404809245113057281": {
+            "courses": [
+                "SPH3UP-0B",
+                "HRT3M1-0B"
+            ]
+        }
     }
 }
