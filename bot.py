@@ -264,6 +264,9 @@ async def on_message(message):
         elif content[1].upper() not in set(data['users'][str(message.author.id)]['courses']):
             await message.channel.send("You are not in this class")
         else:
+            if 'events' not in set(data['courses'][content[1].upper()].keys()):
+                data['courses'][content[1].upper()]['events'] = []
+                updateFile()
             if len(content) > 4:
                 content[3] = " ".join(content[3:])
             if len(content[2]) > 1:
@@ -290,7 +293,10 @@ async def on_message(message):
             await message.channel.send("This class does not exit. Contact your admin to add any new courses.")
         elif content[1].upper() not in set(data['users'][str(message.author.id)]['courses']):
             await message.channel.send("You are not in this class")
-        else: 
+        else:
+            if 'events' not in set(data['courses'][content[1].upper()].keys()):
+                data['courses'][content[1].upper()]['events'] = []
+                updateFile()
             if len(content[1]) > 1:
                 if len(data['courses'][content[1].upper()]['events']) == 0:
                     await message.channel.send("There are no events for this course, add an event using `$addevent [code] [date] [event_title]`")
@@ -321,6 +327,9 @@ async def on_message(message):
         elif content[1].upper() not in set(data['users'][str(message.author.id)]['courses']):
             await message.channel.send("You are not in this class")
         else:
+            if 'events' not in set(data['courses'][content[1].upper()].keys()):
+                data['courses'][content[1].upper()]['events'] = []
+                updateFile()
             if len(content) > 4:
                 content[3] = " ".join(content[3:]) 
             if len(content[2]) > 1:
