@@ -54,7 +54,7 @@ def getQuad(year,month,day):
         return 1
 
 data = {}
-with open("data (1).json") as f:
+with open("data.json") as f:
     data = json.load(f)
 
 def updateFile():
