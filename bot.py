@@ -5,7 +5,7 @@ import datetime
 
 def getDay(year,month,day):
     date = datetime.datetime(year,month,day)
-    exclude = set(['2020-10-12','2020-11-20','2020-12-21','2020-12-22','2020-12-23','2020-12-24','2020-12-25','2020-12-28','2020-12-29','2020-12-30','2020-12-31','2021-01-01','2021-02-05','2021-02-12','2021-02-15','2021-03-15','2021-03-16','2021-03-17','2021-03-18','2021-03-19','2021-04-02','2021-04-05','2021-05-24','2021-06-29','2021-07-01'])
+    exclude = set(['2020-10-12','2020-11-19','2020-11-20','2020-12-21','2020-12-22','2020-12-23','2020-12-24','2020-12-25','2020-12-28','2020-12-29','2020-12-30','2020-12-31','2021-01-01','2021-02-05','2021-02-12','2021-02-15','2021-03-15','2021-03-16','2021-03-17','2021-03-18','2021-03-19','2021-04-02','2021-04-05','2021-05-24','2021-06-29','2021-07-01'])
     if date >= datetime.datetime(2021,7,1):
         return "end"
     if date.strftime("%a") == "Sun" or date.strftime("%a") == "Sat":
@@ -13,7 +13,7 @@ def getDay(year,month,day):
     if date.strftime("%Y-%m-%d") in exclude:
         return "holiday"
     quad1 = datetime.datetime(2020,9,17)
-    quad2 = datetime.datetime(2020,11,23)
+    quad2 = datetime.datetime(2020,11,19)
     quad3 = datetime.datetime(2021,2,8)
     quad4 = datetime.datetime(2021,4,23)
     start = None
@@ -59,7 +59,7 @@ with open("data.json") as f:
     data = json.load(f)
 
 def updateFile():
-    with open("data.json",'w') as f:
+    with open("data (1).json",'w') as f:
         json.dump(data,f, indent=4)
 
 client = discord.Client()
@@ -82,7 +82,7 @@ async def on_message(message):
         await message.channel.send(embed=embed)
 
     elif message.content.lower().startswith('$help'):
-        helpMessage = "`$list` - list all joinable courses for this quad\n`$list [quad]` - list joinable courses for specific quad\n`$join [code]` - add a course to your schedule\n`$leave [code]` - remove a course from your schedule\n`$courses` - view your courses\n`$schedule` - view your schedule for today\n`$schedule YYYY/MM/DD` - view your schedule on a specific day"
+        helpMessage = "`$list` - list all joinable courses for this quad\n`$list [quad]` - list joinable courses for specific quad\n`$join [code]` - add a course to your schedule\n`$leave [code]` - remove a course from your schedule\n`$courses` - view your courses\n`$schedule` - view your schedule for today\n`$schedule YYYY/MM/DD` - view your schedule on a specific day\n`$getevents [code]` - view assignment board for course\n`addevent [code] [yyyy/mm/dd] [event_name]` - add assignment to board\n`delevent [code] [yyyy/mm/dd] [event_name]` - remove event from board"
         embed=discord.Embed(title="Commands", description=helpMessage, color=0x0160a7)
         await message.channel.send(embed=embed)
 
@@ -231,6 +231,7 @@ async def on_message(message):
                 data['courses'][content[1].upper()]['independent'] = independent
                 data['courses'][content[1].upper()]['teacher'] = content[3]
                 data['courses'][content[1].upper()]['quad'] = int(content[2])
+                data['courses'][content[1].upper()]['events'] = []
                 updateFile()
                 await message.channel.send(content[1].upper() + " has been created")
 
@@ -253,6 +254,92 @@ async def on_message(message):
                     pass
             await message.channel.send(content[1].upper() + " has been deleted")
             updateFile()
+
+    elif message.content.lower().startswith('$addevent'):
+        content = message.content.split()
+        if len(content) < 4:
+            await message.channel.send("This command has 3 argument `$addevent [code] [date] [event_title]`")
+        elif content[1].upper() not in set(data['courses'].keys()):
+            await message.channel.send("This class does not exit. Contact your admin to add any new courses.")
+        elif content[1].upper() not in set(data['users'][str(message.author.id)]['courses']):
+            await message.channel.send("You are not in this class")
+        else:
+            if len(content) > 4:
+                content[3] = " ".join(content[3:])
+            if len(content[2]) > 1:
+                try:
+                    date = datetime.datetime.strptime(content[2],'%Y-%m-%d')
+                    data['courses'][content[1].upper()]['events'].append({'date':date.strftime('%Y/%m/%d'),'name':content[3]})
+                    data['courses'][content[1].upper()]['events'].sort(key=lambda e: e['date'])
+                    updateFile()                 
+                except ValueError:
+                    try:
+                        date = datetime.datetime.strptime(content[2],'%Y/%m/%d')
+                        data['courses'][content[1].upper()]['events'].append({'date':date.strftime('%Y/%m/%d'),'name':content[3]})
+                        data['courses'][content[1].upper()]['events'].sort(key=lambda e: e['date'])
+                        updateFile()
+                    except ValueError:
+                        await message.channel.send("Please specify dates in `YYYY/MM/DD` or `YYYY-MM-DD`")
+                        return
+
+    elif message.content.lower().startswith('$getevents'):
+        content = message.content.split()
+        if len(content) < 2:
+            await message.channel.send("This command has 1 argument `$getevents [code]`")
+        elif content[1].upper() not in set(data['courses'].keys()):
+            await message.channel.send("This class does not exit. Contact your admin to add any new courses.")
+        elif content[1].upper() not in set(data['users'][str(message.author.id)]['courses']):
+            await message.channel.send("You are not in this class")
+        else: 
+            if len(content[1]) > 1:
+                if len(data['courses'][content[1].upper()]['events']) == 0:
+                    await message.channel.send("There are no events for this course, add an event using `$addevent [code] [date] [event_title]`")
+                else: 
+                    output =""
+                    remove = []
+                    for i in data['courses'][content[1].upper()]['events']:
+                        if i['date'] < datetime.datetime.today().strftime('%Y/%m/%d'):
+                            remove.append(i)
+                            continue
+                        output+=i['date'] +" : "
+                        output+= i['name']
+                        output += "\n "
+                    if len(remove)>=1:
+                        for i in remove:
+                            data['courses'][content[1].upper()]['events'].remove(i)
+                        updateFile()
+                    embed = discord.Embed(title="Events - {0}".format(content[1].upper()), description=output, color=0x0160a7)
+                    embed.set_footer(text="Use the $addevent command to add upcoming tests, assignments, etc")
+                    await message.channel.send(embed=embed)  
+
+    elif message.content.lower().startswith('$delevent'):
+        content = message.content.split()
+        if len(content) < 4:
+            await message.channel.send("This command has 3 argument `$delevent [code] [date] [event_title]`")
+        elif content[1].upper() not in set(data['courses'].keys()):
+            await message.channel.send("This class does not exit. Contact your admin to add any new courses.")
+        elif content[1].upper() not in set(data['users'][str(message.author.id)]['courses']):
+            await message.channel.send("You are not in this class")
+        else:
+            if len(content) > 4:
+                content[3] = " ".join(content[3:]) 
+            if len(content[2]) > 1:
+                date = None
+                try:
+                    date = datetime.datetime.strptime(content[2],'%Y-%m-%d')      
+                except ValueError:
+                    try:
+                        date = datetime.datetime.strptime(content[2],'%Y/%m/%d')
+                    except ValueError:
+                        await message.channel.send("Please specify dates in `YYYY/MM/DD` or `YYYY-MM-DD`")
+                        return
+                try:
+                    data['courses'][content[1].upper()]['events'].remove({'date':date.strftime('%Y/%m/%d'),'name':content[3]})
+                    updateFile()
+                    await message.channel.send("`{0}` was removed from the {1} event board".format(content[3], content[1].upper()))
+                except ValueError:
+                    await message.channel.send("The specified event was not found")
+                    return
 
 logger = logging.getLogger('discord')
 logger.setLevel(logging.DEBUG)
