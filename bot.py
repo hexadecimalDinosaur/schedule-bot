@@ -41,7 +41,7 @@ def getDay(year,month,day):
 
 def getQuad(year=datetime.datetime.today().year,month=datetime.datetime.today().month,day=datetime.datetime.today().day):
     quad1 = datetime.datetime(2020,9,17)
-    quad2 = datetime.datetime(2020,11,23)
+    quad2 = datetime.datetime(2020,11,19)
     quad3 = datetime.datetime(2021,2,8)
     quad4 = datetime.datetime(2021,4,23)
     date = datetime.datetime(year,month,day)
