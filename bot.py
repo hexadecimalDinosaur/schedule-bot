@@ -178,15 +178,20 @@ async def on_message(message):
             await message.channel.send("That date is past the end of the year")
         else:
             output = ""
+            morning = ""
+            afternoon = ""
             for i in data['users'][str(message.author.id)]['courses']:
                 if data['courses'][i]['quad'] == quad:
-                    output += i + " (" + data['courses'][i]['teacher'] + ") - "
                     if data['courses'][i]['in-school'] == day:
-                        output += "In-School\n"
+                        morning += i + " (" + data['courses'][i]['teacher'] + ") - "
+                        morning += "In-School\n"
                     elif data['courses'][i]['independent'] == day:
-                        output += "Independent Learning\n"
+                        morning += i + " (" + data['courses'][i]['teacher'] + ") - "
+                        morning += "Independent Learning\n"
                     else:
-                        output += "Online Afternoon Class\n"
+                        afternoon += i + " (" + data['courses'][i]['teacher'] + ") - "
+                        afternoon += "Online Afternoon Class\n"
+            output = morning+afternoon
             if output == "":
                 await message.channel.send("<@"+str(message.author.id)+"> you are not in any classes for quad "+str(quad)+". Join your courses using the `$join` command")
                 return
