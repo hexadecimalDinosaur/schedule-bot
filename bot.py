@@ -145,7 +145,7 @@ async def on_message(message):
         elif len(data['users'][str(message.author.id)]['courses']) == 0:
             await message.channel.send("You are not in any courses currently")
         elif content[1].upper() not in set(data['users'][str(message.author.id)]['courses']):
-            await message.chennel.send("You are not in "+content[1].upper())
+            await message.channel.send("You are not in "+content[1].upper())
         else:
             data['users'][str(message.author.id)]['courses'].remove(content[1].upper())
             updateFile()
