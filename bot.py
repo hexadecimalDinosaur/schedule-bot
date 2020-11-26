@@ -1,3 +1,4 @@
+from datetime import timedelta
 import discord
 import logging
 import json
@@ -202,7 +203,41 @@ async def on_message(message):
             embed=discord.Embed(color=0x0160a7, title="{}/{}/{} - Quad {} - Day {}".format(date[0],date[1],date[2],quad, day), description=output)
             embed.set_author(name=str(message.author),icon_url=message.author.avatar_url)
             await message.channel.send(embed=embed)
-        
+
+    elif message.content.lower().startswith('$week'):
+        date = datetime.datetime.today()
+        if date.weekday() == 5:
+            date += datetime.timedelta(days=2)
+        elif date.weekday() == 6:
+            date += datetime.timedelta(days=1)
+        else:
+            date -= datetime.timedelta(days=date.weekday())
+        quad = getQuad(date.year,date.month,date.day)
+        embed = discord.Embed(color=0x0160a7, title="Week of {} - Quad {}".format(date.strftime('%Y/%m/%d'), quad))
+        for i in range(5):
+            output = ""
+            day = getDay(date.year,date.month,date.day)
+            if day == 'holiday':
+                output = "PA Day/Holiday"
+            else:
+                for i in data['users'][str(message.author.id)]['courses']:
+                    if data['courses'][i]['quad'] == quad:
+                            if data['courses'][i]['in-school'] == day:
+                                output = i + " (" + data['courses'][i]['teacher'] + ") - In School\n" + output
+                            elif data['courses'][i]['independent'] == day:
+                                output = i + " (" + data['courses'][i]['teacher'] + ") - Independent\n" + output
+                            else:
+                                output += i + " (" + data['courses'][i]['teacher'] + ") - Online Afternoon\n"
+            if len(output) == 0:
+                await message.channel.send("<@"+str(message.author.id)+"> has no courses added for this quad")
+                return
+            title = date.strftime('%A')
+            if day != 'holiday': title += " - Day {}".format(day)
+            embed.add_field(name=title, value=output, inline=False)
+            date += datetime.timedelta(days=1)
+        embed.set_author(name=str(message.author),icon_url=message.author.avatar_url)
+        await message.channel.send(embed=embed)
+
     elif message.content.lower().startswith('$addcourse'):
         if not message.author.permissions_in(message.channel).administrator:
             await message.channel.send("<@"+str(message.author.id)+"> this command is restricted to server admins")
