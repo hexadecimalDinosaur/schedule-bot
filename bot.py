@@ -108,6 +108,8 @@ async def on_message(message):
             quad = int(content[1])
         output = ""
         for i in sorted(list(data['courses'].keys())):
+            if 'hidden' in data['courses'][i].keys() and data['courses'][i]['hidden']:
+                continue
             if data['courses'][i]['quad'] == quad:
                 output += i
                 if data['courses'][i]['teacher']:
@@ -255,6 +257,9 @@ async def on_message(message):
                     return
                 if len(content[4]) != 4:
                     await message.channel.send("Days should be for letters, `s` for in school, `o` for online, `i` for independent")
+                hidden = False
+                if len(content) > 5 and content[5] == 'true':
+                    hidden = True
                 data['courses'][content[1].upper()] = {}
                 independent = 0
                 online = []
@@ -272,6 +277,7 @@ async def on_message(message):
                 data['courses'][content[1].upper()]['teacher'] = content[3]
                 data['courses'][content[1].upper()]['quad'] = int(content[2])
                 data['courses'][content[1].upper()]['events'] = []
+                data['courses'][content[1].upper()]['hidden'] = hidden
                 updateFile()
                 await message.channel.send(content[1].upper() + " has been created")
 
