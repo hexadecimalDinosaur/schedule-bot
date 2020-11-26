@@ -258,7 +258,7 @@ async def on_message(message):
                 if len(content[4]) != 4:
                     await message.channel.send("Days should be for letters, `s` for in school, `o` for online, `i` for independent")
                 hidden = False
-                if len(content) > 5 and content[5] == 'true':
+                if len(content) > 5 and content[5].lower() == 'true':
                     hidden = True
                 data['courses'][content[1].upper()] = {}
                 independent = 0
