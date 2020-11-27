@@ -169,8 +169,40 @@ async def on_message(message):
                     date = datetime.datetime.strptime(content[1],'%Y/%m/%d')
                     date = [date.year,date.month,date.day]
                 except ValueError:
-                    await message.channel.send("Please specify dates in `YYYY/MM/DD` or `YYYY-MM-DD`")
-                    return
+                    if content[1].lower() in ('sun', 'sunday', 'sat', 'saturday'):
+                        await message.channel.send("It's the weekend! No classes!")
+                        return
+                    elif content[1].lower() in ('mon', 'monday', 'tue', 'tues', 'tuesday', 'wed', 'wednesday', 'thu', 'thur', 'thursday', 'fri', 'friday'):
+                        date = datetime.datetime.today()
+                        if date.weekday() == 5:
+                            date += datetime.timedelta(days=2)
+                        elif date.weekday() == 6:
+                            date += datetime.timedelta(days=1)
+                        else:
+                            date -= datetime.timedelta(days=date.weekday())
+                        if content[1].lower() in ('mon', 'monday'):
+                            if datetime.datetime.today().strftime('%Y/%m/%d') > date.strftime('%Y/%m/%d'):
+                                date += datetime.timedelta(days=7)
+                        if content[1].lower() in ('tue', 'tues', 'tuesday'):
+                            date += datetime.timedelta(days=1)
+                            if datetime.datetime.today().strftime('%Y/%m/%d') > date.strftime('%Y/%m/%d'):
+                                date += datetime.timedelta(days=7)
+                        if content[1].lower() in ('wed', 'wednesday'):
+                            date += datetime.timedelta(days=2)
+                            if datetime.datetime.today().strftime('%Y/%m/%d') > date.strftime('%Y/%m/%d'):
+                                date += datetime.timedelta(days=7)
+                        if content[1].lower() in ('thu', 'thur', 'thursday'):
+                            date += datetime.timedelta(days=3)
+                            if datetime.datetime.today().strftime('%Y/%m/%d') > date.strftime('%Y/%m/%d'):
+                                date += datetime.timedelta(days=7)
+                        if content[1].lower() in ('fri', 'friday'):
+                            date += datetime.timedelta(days=4)
+                            if datetime.datetime.today().strftime('%Y/%m/%d') > date.strftime('%Y/%m/%d'):
+                                date += datetime.timedelta(days=7)
+                        date = [date.year,date.month,date.day]
+                    else:
+                        await message.channel.send("Please specify dates in `YYYY/MM/DD`, `YYYY-MM-DD`, or days of the week")
+                        return
         quad = getQuad(date[0],date[1],date[2])
         day = getDay(date[0],date[1],date[2])
         if day == 'weekend':
