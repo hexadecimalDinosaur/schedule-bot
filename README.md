@@ -17,6 +17,12 @@ Install the `discord` module using pip, run `bot.py` using python3 with the `dat
 
 `$schedule [YYYY/MM/DD]` - view your schedule on a specific day
 
+`$getevents [code]` - view assignment board for course
+
+`$addevent [code] [yyyy/mm/dd] [event_name]` - add assignment to board
+
+`$delevent [code] [yyyy/mm/dd] [event_name]` - remove event from board
+
 ### Admin Commands
 `addcourse [code] [quad] [teacher] [day]` - create a joinable course
 
