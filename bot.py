@@ -108,12 +108,15 @@ async def on_message(message):
 
     elif message.content.lower().startswith('$list'):
         content = message.content.split()
+        showHidden = False
         quad = getQuad()
-        if len(content) == 2 and content[1].isdigit() and content[1] in ["1","2","3","4"]:
+        if len(content) >= 2 and content[1].isdigit() and content[1] in ["1","2","3","4"]:
             quad = int(content[1])
+        if 'hidden' in content:
+            showHidden = True
         output = ""
         for i in sorted(list(data[str(message.channel.guild.id)]['courses'].keys())):
-            if 'hidden' in data[str(message.channel.guild.id)]['courses'][i].keys() and data[str(message.channel.guild.id)]['courses'][i]['hidden']:
+            if 'hidden' in data[str(message.channel.guild.id)]['courses'][i].keys() and data[str(message.channel.guild.id)]['courses'][i]['hidden'] and not showHidden:
                 continue
             if data[str(message.channel.guild.id)]['courses'][i]['quad'] == quad:
                 output += i
