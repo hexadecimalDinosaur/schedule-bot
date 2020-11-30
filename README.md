@@ -4,8 +4,6 @@ Discord bot for timetable information based on the TDSB 2020 quadmester model
 ## Instructions
 Install the `discord` module using pip, run `bot.py` using python3 with the `data.json` in the working directory
 
-Only one instance of the bot should be used per server as the json database is shared among all servers the bot is present in
-
 ## Usage
 `$list` - list all joinable courses
 

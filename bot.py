@@ -70,13 +70,18 @@ async def on_ready():
     print('Logged in as {0.user}'.format(client))
 
 @client.event
+async def on_guild_join(guild:discord.guild):
+    data[str(guild.id)] = {'courses':{},'users':{}}
+    updateFile()
+
+@client.event
 async def on_message(message):
     if message.author == client.user:
         return
-    
+
     if message.content.lower().startswith('$ping'):
         await message.channel.send('<:ping_pong:772097617932320768> Pong! `{0}ms`'.format(int(client.latency*1000)))
-    
+
     elif message.content.lower().startswith('$about'):
         embed=discord.Embed(title="Schedule Bot", url="https://github.com/UserBlackBox/schedule-bot", description="Discord bot for timetable information based on the TDSB 2020 quadmester model", color=0x0160a7)
         embed.set_thumbnail(url="https://cdn.discordapp.com/avatars/771927466267770910/700c2fe2da53caf2a60041e7d2bf21b4.png?size=2048")
@@ -88,10 +93,10 @@ async def on_message(message):
         await message.channel.send(embed=embed)
 
     elif message.content.lower().startswith('$courses'):
-        if str(message.author.id) in list(data['users'].keys()) and len(data['users'][str(message.author.id)]['courses']) > 0:
+        if str(message.author.id) in list(data[str(message.channel.guild.id)]['users'].keys()) and len(data[str(message.channel.guild.id)]['users'][str(message.author.id)]['courses']) > 0:
             quads = ["","","",""]
-            for i in data['users'][str(message.author.id)]['courses']:
-                quads[data["courses"][i]["quad"]-1] += str(i+" - "+data["courses"][i]["teacher"]+"\n")
+            for i in data[str(message.channel.guild.id)]['users'][str(message.author.id)]['courses']:
+                quads[data[str(message.channel.guild.id)]["courses"][i]["quad"]-1] += str(i+" - "+data[str(message.channel.guild.id)]["courses"][i]["teacher"]+"\n")
             embed=discord.Embed(color=0x0160a7)
             embed.set_author(name=str(message.author), icon_url=message.author.avatar_url)
             for i in range(4):
@@ -100,61 +105,61 @@ async def on_message(message):
             await message.channel.send(embed=embed)
         else:
             await message.channel.send("**" + str(message.author)+"** does not have their courses added to the bot")
-    
+
     elif message.content.lower().startswith('$list'):
         content = message.content.split()
         quad = getQuad()
         if len(content) == 2 and content[1].isdigit() and content[1] in ["1","2","3","4"]:
             quad = int(content[1])
         output = ""
-        for i in sorted(list(data['courses'].keys())):
-            if 'hidden' in data['courses'][i].keys() and data['courses'][i]['hidden']:
+        for i in sorted(list(data[str(message.channel.guild.id)]['courses'].keys())):
+            if 'hidden' in data[str(message.channel.guild.id)]['courses'][i].keys() and data[str(message.channel.guild.id)]['courses'][i]['hidden']:
                 continue
-            if data['courses'][i]['quad'] == quad:
+            if data[str(message.channel.guild.id)]['courses'][i]['quad'] == quad:
                 output += i
-                if data['courses'][i]['teacher']:
-                    output += " ("+data['courses'][i]['teacher']+")"
+                if data[str(message.channel.guild.id)]['courses'][i]['teacher']:
+                    output += " ("+data[str(message.channel.guild.id)]['courses'][i]['teacher']+")"
                 output += "\n"
         if len(output) == 0:
             output += "No courses have been added for quadmester {0} yet".format(str(quad))
         embed = discord.Embed(title="Quad {0} Courses".format(str(quad)), description=output, color=0x0160a7)
         embed.set_footer(text="Use the $join command to join a course\nIf your course is not in this list contact an admin")
         await message.channel.send(embed=embed)
-    
+
     elif message.content.lower().startswith('$join'):
         content = message.content.split()
         if len(content) < 2:
             await message.channel.send("Please specify a course to join")
-        elif content[1].upper() not in set(data['courses'].keys()):
+        elif content[1].upper() not in set(data[str(message.channel.guild.id)]['courses'].keys()):
             await message.channel.send("Please specify a course in the course list which can be viewed with `$list`. If your course is not there contact an admin")
         else:
-            if str(message.author.id) not in set(data['users'].keys()):
-                data['users'][str(message.author.id)] = {}
-                data['users'][str(message.author.id)]['courses'] = []
-            if content[1].upper() in set(data['users'][str(message.author.id)]['courses']):
+            if str(message.author.id) not in set(data[str(message.channel.guild.id)]['users'].keys()):
+                data[str(message.channel.guild.id)]['users'][str(message.author.id)] = {}
+                data[str(message.channel.guild.id)]['users'][str(message.author.id)]['courses'] = []
+            if content[1].upper() in set(data[str(message.channel.guild.id)]['users'][str(message.author.id)]['courses']):
                 await message.channel.send(str(message.author)+" is already in "+content[1].upper())
                 return
-            data['users'][str(message.author.id)]['courses'].append(content[1].upper())
+            data[str(message.channel.guild.id)]['users'][str(message.author.id)]['courses'].append(content[1].upper())
             updateFile()
             await message.channel.send(str(message.author)+" has been added to " + content[1].upper())
-    
+
     elif message.content.lower().startswith('$leave'):
         content = message.content.split()
         if len(content) < 2:
             await message.channel.send("Please specify a course to leave")
-        elif str(message.author.id) not in set(data['users'].keys()):
+        elif str(message.author.id) not in set(data[str(message.channel.guild.id)]['users'].keys()):
             await message.channel.send("You are not in any courses currently")
-        elif len(data['users'][str(message.author.id)]['courses']) == 0:
+        elif len(data[str(message.channel.guild.id)]['users'][str(message.author.id)]['courses']) == 0:
             await message.channel.send("You are not in any courses currently")
-        elif content[1].upper() not in set(data['users'][str(message.author.id)]['courses']):
+        elif content[1].upper() not in set(data[str(message.channel.guild.id)]['users'][str(message.author.id)]['courses']):
             await message.channel.send("You are not in "+content[1].upper())
         else:
-            data['users'][str(message.author.id)]['courses'].remove(content[1].upper())
+            data[str(message.channel.guild.id)]['users'][str(message.author.id)]['courses'].remove(content[1].upper())
             updateFile()
             await message.channel.send(str(message.author)+" has left "+content[1].upper())
-    
+
     elif message.content.lower().startswith('$schedule'):
-        if str(message.author.id) not in set(data['users'].keys()):
+        if str(message.author.id) not in set(data[str(message.channel.guild.id)]['users'].keys()):
             await message.channel.send('<@'+str(message.author.id)+'> you are not in any courses, to view a list of courses use `$list` and use `$join` to join the course')
             return
         content = message.content.split()
@@ -215,16 +220,16 @@ async def on_message(message):
             output = ""
             morning = ""
             afternoon = ""
-            for i in data['users'][str(message.author.id)]['courses']:
-                if data['courses'][i]['quad'] == quad:
-                    if data['courses'][i]['in-school'] == day:
-                        morning += i + " (" + data['courses'][i]['teacher'] + ") - "
+            for i in data[str(message.channel.guild.id)]['users'][str(message.author.id)]['courses']:
+                if data[str(message.channel.guild.id)]['courses'][i]['quad'] == quad:
+                    if data[str(message.channel.guild.id)]['courses'][i]['in-school'] == day:
+                        morning += i + " (" + data[str(message.channel.guild.id)]['courses'][i]['teacher'] + ") - "
                         morning += "In-School\n"
-                    elif data['courses'][i]['independent'] == day:
-                        morning += i + " (" + data['courses'][i]['teacher'] + ") - "
+                    elif data[str(message.channel.guild.id)]['courses'][i]['independent'] == day:
+                        morning += i + " (" + data[str(message.channel.guild.id)]['courses'][i]['teacher'] + ") - "
                         morning += "Independent Learning\n"
                     else:
-                        afternoon += i + " (" + data['courses'][i]['teacher'] + ") - "
+                        afternoon += i + " (" + data[str(message.channel.guild.id)]['courses'][i]['teacher'] + ") - "
                         afternoon += "Online Afternoon Class\n"
             output = morning+afternoon
             if output == "":
@@ -254,14 +259,14 @@ async def on_message(message):
             if day == 'holiday':
                 output = "PA Day/Holiday"
             else:
-                for i in data['users'][str(message.author.id)]['courses']:
-                    if data['courses'][i]['quad'] == quad:
-                            if data['courses'][i]['in-school'] == day:
-                                output = i + " (" + data['courses'][i]['teacher'] + ") - In School\n" + output
-                            elif data['courses'][i]['independent'] == day:
-                                output = i + " (" + data['courses'][i]['teacher'] + ") - Independent\n" + output
+                for i in data[str(message.channel.guild.id)]['users'][str(message.author.id)]['courses']:
+                    if data[str(message.channel.guild.id)]['courses'][i]['quad'] == quad:
+                            if data[str(message.channel.guild.id)]['courses'][i]['in-school'] == day:
+                                output = i + " (" + data[str(message.channel.guild.id)]['courses'][i]['teacher'] + ") - In School\n" + output
+                            elif data[str(message.channel.guild.id)]['courses'][i]['independent'] == day:
+                                output = i + " (" + data[str(message.channel.guild.id)]['courses'][i]['teacher'] + ") - Independent\n" + output
                             else:
-                                output += i + " (" + data['courses'][i]['teacher'] + ") - Online Afternoon\n"
+                                output += i + " (" + data[str(message.channel.guild.id)]['courses'][i]['teacher'] + ") - Online Afternoon\n"
             if len(output) == 0:
                 await message.channel.send("<@"+str(message.author.id)+"> has no courses added for this quad")
                 return
@@ -281,7 +286,7 @@ async def on_message(message):
                 await message.channel.send("This command has 4 arguments `$addcourse [code] [quad] [teacher] [days]`")
                 return
             else:
-                if content[1].upper() in set(data['courses'].keys()):
+                if content[1].upper() in set(data[str(message.channel.guild.id)]['courses'].keys()):
                     await message.channel.send(content[1].upper() + " already exists")
                     return
                 if not content[2].isdigit():
@@ -292,7 +297,7 @@ async def on_message(message):
                 hidden = False
                 if len(content) > 5 and content[5].lower() == 'true':
                     hidden = True
-                data['courses'][content[1].upper()] = {}
+                data[str(message.channel.guild.id)]['courses'][content[1].upper()] = {}
                 independent = 0
                 online = []
                 school = 0
@@ -303,13 +308,13 @@ async def on_message(message):
                         online.append(i+1)
                     if content[4][i] == 'i':
                         independent = i+1
-                data['courses'][content[1].upper()]['in-school'] = school
-                data['courses'][content[1].upper()]['online'] = online
-                data['courses'][content[1].upper()]['independent'] = independent
-                data['courses'][content[1].upper()]['teacher'] = content[3]
-                data['courses'][content[1].upper()]['quad'] = int(content[2])
-                data['courses'][content[1].upper()]['events'] = []
-                data['courses'][content[1].upper()]['hidden'] = hidden
+                data[str(message.channel.guild.id)]['courses'][content[1].upper()]['in-school'] = school
+                data[str(message.channel.guild.id)]['courses'][content[1].upper()]['online'] = online
+                data[str(message.channel.guild.id)]['courses'][content[1].upper()]['independent'] = independent
+                data[str(message.channel.guild.id)]['courses'][content[1].upper()]['teacher'] = content[3]
+                data[str(message.channel.guild.id)]['courses'][content[1].upper()]['quad'] = int(content[2])
+                data[str(message.channel.guild.id)]['courses'][content[1].upper()]['events'] = []
+                data[str(message.channel.guild.id)]['courses'][content[1].upper()]['hidden'] = hidden
                 updateFile()
                 await message.channel.send(content[1].upper() + " has been created")
 
@@ -321,13 +326,13 @@ async def on_message(message):
             if len(content) != 2:
                 await message.channel.send("This command has 1 argument: `$delcourse [code]`")
                 return
-            if content[1].upper() not in set(data['courses'].keys()):
+            if content[1].upper() not in set(data[str(message.channel.guild.id)]['courses'].keys()):
                 await message.channel.send(content[1].upper() + " does not exist")
                 return
-            del data['courses'][content[1].upper()]
-            for i in data['users'].keys():
+            del data[str(message.channel.guild.id)]['courses'][content[1].upper()]
+            for i in data[str(message.channel.guild.id)]['users'].keys():
                 try:
-                    data['users'][i]['courses'].remove(content[1].upper())
+                    data[str(message.channel.guild.id)]['users'][i]['courses'].remove(content[1].upper())
                 except ValueError:
                     pass
             await message.channel.send(content[1].upper() + " has been deleted")
@@ -337,27 +342,27 @@ async def on_message(message):
         content = message.content.split()
         if len(content) < 4:
             await message.channel.send("This command has 3 argument `$addevent [code] [date] [event_title]`")
-        elif content[1].upper() not in set(data['courses'].keys()):
+        elif content[1].upper() not in set(data[str(message.channel.guild.id)]['courses'].keys()):
             await message.channel.send("This class does not exit. Contact your admin to add any new courses.")
-        elif content[1].upper() not in set(data['users'][str(message.author.id)]['courses']):
+        elif content[1].upper() not in set(data[str(message.channel.guild.id)]['users'][str(message.author.id)]['courses']):
             await message.channel.send("You are not in this class")
         else:
-            if 'events' not in set(data['courses'][content[1].upper()].keys()):
-                data['courses'][content[1].upper()]['events'] = []
+            if 'events' not in set(data[str(message.channel.guild.id)]['courses'][content[1].upper()].keys()):
+                data[str(message.channel.guild.id)]['courses'][content[1].upper()]['events'] = []
                 updateFile()
             if len(content) > 4:
                 content[3] = " ".join(content[3:])
             if len(content[2]) > 1:
                 try:
                     date = datetime.datetime.strptime(content[2],'%Y-%m-%d')
-                    data['courses'][content[1].upper()]['events'].append({'date':date.strftime('%Y/%m/%d'),'name':content[3]})
-                    data['courses'][content[1].upper()]['events'].sort(key=lambda e: e['date'])
-                    updateFile()                 
+                    data[str(message.channel.guild.id)]['courses'][content[1].upper()]['events'].append({'date':date.strftime('%Y/%m/%d'),'name':content[3]})
+                    data[str(message.channel.guild.id)]['courses'][content[1].upper()]['events'].sort(key=lambda e: e['date'])
+                    updateFile()
                 except ValueError:
                     try:
                         date = datetime.datetime.strptime(content[2],'%Y/%m/%d')
-                        data['courses'][content[1].upper()]['events'].append({'date':date.strftime('%Y/%m/%d'),'name':content[3]})
-                        data['courses'][content[1].upper()]['events'].sort(key=lambda e: e['date'])
+                        data[str(message.channel.guild.id)]['courses'][content[1].upper()]['events'].append({'date':date.strftime('%Y/%m/%d'),'name':content[3]})
+                        data[str(message.channel.guild.id)]['courses'][content[1].upper()]['events'].sort(key=lambda e: e['date'])
                         updateFile()
                     except ValueError:
                         await message.channel.send("Please specify dates in `YYYY/MM/DD` or `YYYY-MM-DD`")
@@ -367,21 +372,21 @@ async def on_message(message):
         content = message.content.split()
         if len(content) < 2:
             await message.channel.send("This command has 1 argument `$getevents [code]`")
-        elif content[1].upper() not in set(data['courses'].keys()):
+        elif content[1].upper() not in set(data[str(message.channel.guild.id)]['courses'].keys()):
             await message.channel.send("This class does not exit. Contact your admin to add any new courses.")
-        elif content[1].upper() not in set(data['users'][str(message.author.id)]['courses']):
+        elif content[1].upper() not in set(data[str(message.channel.guild.id)]['users'][str(message.author.id)]['courses']):
             await message.channel.send("You are not in this class")
         else:
-            if 'events' not in set(data['courses'][content[1].upper()].keys()):
-                data['courses'][content[1].upper()]['events'] = []
+            if 'events' not in set(data[str(message.channel.guild.id)]['courses'][content[1].upper()].keys()):
+                data[str(message.channel.guild.id)]['courses'][content[1].upper()]['events'] = []
                 updateFile()
             if len(content[1]) > 1:
-                if len(data['courses'][content[1].upper()]['events']) == 0:
+                if len(data[str(message.channel.guild.id)]['courses'][content[1].upper()]['events']) == 0:
                     await message.channel.send("There are no events for this course, add an event using `$addevent [code] [date] [event_title]`")
                 else: 
                     output =""
                     remove = []
-                    for i in data['courses'][content[1].upper()]['events']:
+                    for i in data[str(message.channel.guild.id)]['courses'][content[1].upper()]['events']:
                         if i['date'] < datetime.datetime.today().strftime('%Y/%m/%d'):
                             remove.append(i)
                             continue
@@ -390,7 +395,7 @@ async def on_message(message):
                         output += "\n "
                     if len(remove)>=1:
                         for i in remove:
-                            data['courses'][content[1].upper()]['events'].remove(i)
+                            data[str(message.channel.guild.id)]['courses'][content[1].upper()]['events'].remove(i)
                         updateFile()
                     embed = discord.Embed(title="Events - {0}".format(content[1].upper()), description=output, color=0x0160a7)
                     embed.set_footer(text="Use the $addevent command to add upcoming tests, assignments, etc")
@@ -400,13 +405,13 @@ async def on_message(message):
         content = message.content.split()
         if len(content) < 4:
             await message.channel.send("This command has 3 argument `$delevent [code] [date] [event_title]`")
-        elif content[1].upper() not in set(data['courses'].keys()):
+        elif content[1].upper() not in set(data[str(message.channel.guild.id)]['courses'].keys()):
             await message.channel.send("This class does not exit. Contact your admin to add any new courses.")
-        elif content[1].upper() not in set(data['users'][str(message.author.id)]['courses']):
+        elif content[1].upper() not in set(data[str(message.channel.guild.id)]['users'][str(message.author.id)]['courses']):
             await message.channel.send("You are not in this class")
         else:
-            if 'events' not in set(data['courses'][content[1].upper()].keys()):
-                data['courses'][content[1].upper()]['events'] = []
+            if 'events' not in set(data[str(message.channel.guild.id)]['courses'][content[1].upper()].keys()):
+                data[str(message.channel.guild.id)]['courses'][content[1].upper()]['events'] = []
                 updateFile()
             if len(content) > 4:
                 content[3] = " ".join(content[3:]) 
@@ -421,7 +426,7 @@ async def on_message(message):
                         await message.channel.send("Please specify dates in `YYYY/MM/DD` or `YYYY-MM-DD`")
                         return
                 try:
-                    data['courses'][content[1].upper()]['events'].remove({'date':date.strftime('%Y/%m/%d'),'name':content[3]})
+                    data[str(message.channel.guild.id)]['courses'][content[1].upper()]['events'].remove({'date':date.strftime('%Y/%m/%d'),'name':content[3]})
                     updateFile()
                     await message.channel.send("`{0}` was removed from the {1} event board".format(content[3], content[1].upper()))
                 except ValueError:
