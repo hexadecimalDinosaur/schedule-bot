@@ -361,12 +361,14 @@ async def on_message(message):
                     data[str(message.channel.guild.id)]['courses'][content[1].upper()]['events'].append({'date':date.strftime('%Y/%m/%d'),'name':content[3]})
                     data[str(message.channel.guild.id)]['courses'][content[1].upper()]['events'].sort(key=lambda e: e['date'])
                     updateFile()
+                    await message.channel.send("Event `{1}` has been created".format(content[3]))
                 except ValueError:
                     try:
                         date = datetime.datetime.strptime(content[2],'%Y/%m/%d')
                         data[str(message.channel.guild.id)]['courses'][content[1].upper()]['events'].append({'date':date.strftime('%Y/%m/%d'),'name':content[3]})
                         data[str(message.channel.guild.id)]['courses'][content[1].upper()]['events'].sort(key=lambda e: e['date'])
                         updateFile()
+                        await message.channel.send("Event `{1}` has been created".format(content[3]))
                     except ValueError:
                         await message.channel.send("Please specify dates in `YYYY/MM/DD` or `YYYY-MM-DD`")
                         return
