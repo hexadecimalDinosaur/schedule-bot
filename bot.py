@@ -107,6 +107,7 @@ async def on_message(message):
                 user = message.channel.guild.get_member_named(" ".join(content[1:]))
                 if user == None:
                     await message.channel.send("**"+" ".join(content[1:])+"** could not be found in the member list")
+                    return
         if str(user.id) in list(data[str(message.channel.guild.id)]['users'].keys()) and len(data[str(message.channel.guild.id)]['users'][str(user.id)]['courses']) > 0:
             quads = ["","","",""]
             for i in data[str(message.channel.guild.id)]['users'][str(user.id)]['courses']:
@@ -261,6 +262,18 @@ async def on_message(message):
             await message.channel.send(embed=embed)
 
     elif message.content.lower().startswith('$week'):
+        user = message.author
+        if len(message.mentions) >= 1:
+            user = message.mentions[0]
+        elif len(message.content.split()) > 1:
+            content = message.content.split()
+            if content[1].isdigit() and message.channel.guild.get_member(int(content[1])) != None:
+                    user = message.channel.guild.get_member(int(content[1]))
+            else:
+                user = message.channel.guild.get_member_named(" ".join(content[1:]))
+                if user == None:
+                    await message.channel.send("**"+" ".join(content[1:])+"** could not be found in the member list")
+                    return
         date = datetime.datetime.today()
         if date.weekday() == 5:
             date += datetime.timedelta(days=2)
@@ -270,8 +283,8 @@ async def on_message(message):
             date -= datetime.timedelta(days=date.weekday())
         quad = getQuad(date.year,date.month,date.day)
         embed = discord.Embed(color=0x0160a7, title="Week of {} - Quad {}".format(date.strftime('%Y/%m/%d'), quad))
-        if str(message.author.id) not in set(data[str(message.channel.guild.id)]['users'].keys()):
-            await message.channel.send("<@"+str(message.author.id)+"> has no courses added for this quad")
+        if str(user.id) not in set(data[str(message.channel.guild.id)]['users'].keys()):
+            await message.channel.send("**"+str(user)+"** has no courses added for this quad, to view a list of courses use `$list` and use `$join` to join the course")
             return
         for i in range(5):
             output = ""
@@ -279,7 +292,7 @@ async def on_message(message):
             if day == 'holiday':
                 output = "PA Day/Holiday"
             else:
-                for i in data[str(message.channel.guild.id)]['users'][str(message.author.id)]['courses']:
+                for i in data[str(message.channel.guild.id)]['users'][str(user.id)]['courses']:
                     if data[str(message.channel.guild.id)]['courses'][i]['quad'] == quad:
                             if data[str(message.channel.guild.id)]['courses'][i]['in-school'] == day:
                                 output = i + " (" + data[str(message.channel.guild.id)]['courses'][i]['teacher'] + ") - In School\n" + output
@@ -288,13 +301,13 @@ async def on_message(message):
                             else:
                                 output += i + " (" + data[str(message.channel.guild.id)]['courses'][i]['teacher'] + ") - Online Afternoon\n"
             if len(output) == 0:
-                await message.channel.send("<@"+str(message.author.id)+"> has no courses added for this quad")
+                await message.channel.send("**"+str(user)+"** has no courses added for this quad, to view a list of courses use `$list` and use `$join` to join the course")
                 return
             title = date.strftime('%A')
             if day != 'holiday': title += " - Day {}".format(day)
             embed.add_field(name=title, value=output, inline=False)
             date += datetime.timedelta(days=1)
-        embed.set_author(name=str(message.author),icon_url=message.author.avatar_url)
+        embed.set_author(name=str(user),icon_url=user.avatar_url)
         await message.channel.send(embed=embed)
 
     elif message.content.lower().startswith('$addcourse'):
