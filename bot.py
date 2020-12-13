@@ -91,7 +91,7 @@ async def on_message(message):
         await message.channel.send(embed=embed)
 
     elif message.content.lower().startswith('$help'):
-        helpMessage = "`$list` - list all joinable courses for this quad\n`$list [quad]` - list joinable courses for specific quad\n`$join [code]` - add a course to your schedule\n`$leave [code]` - remove a course from your schedule\n`$courses` - view your courses\n`$courses [user]` - view another user's courses\n`$schedule` - view your schedule for today\n`$schedule YYYY/MM/DD` - view your schedule on a specific day\n`$week` - view your schedule for the week\n`$getevents [code]` - view assignment board for course\n`addevent [code] [yyyy/mm/dd] [event_name]` - add assignment to board\n`delevent [code] [yyyy/mm/dd] [event_name]` - remove event from board"
+        helpMessage = "`$list` - list all joinable courses for this quad\n`$list [quad]` - list joinable courses for specific quad\n`$join [code]` - add a course to your schedule\n`$leave [code]` - remove a course from your schedule\n`$courses` - view your courses\n`$courses [user]` - view another user's courses\n`$schedule` - view your schedule for today\n`$schedule YYYY/MM/DD` - view your schedule on a specific day\n`$week` - view your schedule for the week\n`$week [user]` - view weekly schedule of another user\n`$getevents [code]` - view assignment board for course\n`addevent [code] [yyyy/mm/dd] [event_name]` - add assignment to board\n`delevent [code] [yyyy/mm/dd] [event_name]` - remove event from board"
         embed=discord.Embed(title="Commands", description=helpMessage, color=0x0160a7)
         await message.channel.send(embed=embed)
 
