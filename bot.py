@@ -63,7 +63,9 @@ def updateFile():
     with open("data.json",'w') as f:
         json.dump(data,f, indent=4)
 
-client = discord.Client()
+intents = discord.Intents.default()
+intents.members = True
+client = discord.Client(intents=intents)
 
 @client.event
 async def on_ready():
@@ -73,6 +75,7 @@ async def on_ready():
 async def on_guild_join(guild:discord.guild):
     data[str(guild.id)] = {'courses':{},'users':{}}
     updateFile()
+    print('Joined new server: {0}\nid:{1}'.format(guild.name,str(guild.id)))
 
 @client.event
 async def on_message(message):
@@ -88,23 +91,34 @@ async def on_message(message):
         await message.channel.send(embed=embed)
 
     elif message.content.lower().startswith('$help'):
-        helpMessage = "`$list` - list all joinable courses for this quad\n`$list [quad]` - list joinable courses for specific quad\n`$join [code]` - add a course to your schedule\n`$leave [code]` - remove a course from your schedule\n`$courses` - view your courses\n`$schedule` - view your schedule for today\n`$schedule YYYY/MM/DD` - view your schedule on a specific day\n`$week` - view your schedule for the week\n`$getevents [code]` - view assignment board for course\n`addevent [code] [yyyy/mm/dd] [event_name]` - add assignment to board\n`delevent [code] [yyyy/mm/dd] [event_name]` - remove event from board"
+        helpMessage = "`$list` - list all joinable courses for this quad\n`$list [quad]` - list joinable courses for specific quad\n`$join [code]` - add a course to your schedule\n`$leave [code]` - remove a course from your schedule\n`$courses` - view your courses\n`$courses [user]` - view another user's courses\n`$schedule` - view your schedule for today\n`$schedule YYYY/MM/DD` - view your schedule on a specific day\n`$week` - view your schedule for the week\n`$getevents [code]` - view assignment board for course\n`addevent [code] [yyyy/mm/dd] [event_name]` - add assignment to board\n`delevent [code] [yyyy/mm/dd] [event_name]` - remove event from board"
         embed=discord.Embed(title="Commands", description=helpMessage, color=0x0160a7)
         await message.channel.send(embed=embed)
 
     elif message.content.lower().startswith('$courses'):
-        if str(message.author.id) in list(data[str(message.channel.guild.id)]['users'].keys()) and len(data[str(message.channel.guild.id)]['users'][str(message.author.id)]['courses']) > 0:
+        user = message.author
+        if len(message.mentions) >= 1:
+            user = message.mentions[0]
+        elif len(message.content.split()) > 1:
+            content = message.content.split()
+            if content[1].isdigit() and message.channel.guild.get_member(int(content[1])) != None:
+                    user = message.channel.guild.get_member(int(content[1]))
+            else:
+                user = message.channel.guild.get_member_named(" ".join(content[1:]))
+                if user == None:
+                    await message.channel.send("**"+" ".join(content[1:])+"** could not be found in the member list")
+        if str(user.id) in list(data[str(message.channel.guild.id)]['users'].keys()) and len(data[str(message.channel.guild.id)]['users'][str(user.id)]['courses']) > 0:
             quads = ["","","",""]
-            for i in data[str(message.channel.guild.id)]['users'][str(message.author.id)]['courses']:
+            for i in data[str(message.channel.guild.id)]['users'][str(user.id)]['courses']:
                 quads[data[str(message.channel.guild.id)]["courses"][i]["quad"]-1] += str(i+" - "+data[str(message.channel.guild.id)]["courses"][i]["teacher"]+"\n")
             embed=discord.Embed(color=0x0160a7)
-            embed.set_author(name=str(message.author), icon_url=message.author.avatar_url)
+            embed.set_author(name=str(user), icon_url=user.avatar_url)
             for i in range(4):
                 if len(quads[i]) > 0:
                     embed.add_field(name="Quad "+str(i+1), value=quads[i])
             await message.channel.send(embed=embed)
         else:
-            await message.channel.send("**" + str(message.author)+"** does not have their courses added to the bot")
+            await message.channel.send("**" + str(user)+"** does not have their courses added to the bot")
 
     elif message.content.lower().startswith('$list'):
         content = message.content.split()
