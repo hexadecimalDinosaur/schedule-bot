@@ -256,6 +256,9 @@ async def on_message(message):
             date -= datetime.timedelta(days=date.weekday())
         quad = getQuad(date.year,date.month,date.day)
         embed = discord.Embed(color=0x0160a7, title="Week of {} - Quad {}".format(date.strftime('%Y/%m/%d'), quad))
+        if str(message.author.id) not in set(data[str(message.channel.guild.id)]['users'].keys()):
+            await message.channel.send("<@"+str(message.author.id)+"> has no courses added for this quad")
+            return
         for i in range(5):
             output = ""
             day = getDay(date.year,date.month,date.day)
