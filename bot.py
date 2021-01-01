@@ -290,7 +290,7 @@ async def on_message(message):
             output = ""
             day = getDay(date.year,date.month,date.day)
             if day == 'holiday':
-                output = "PA Day/Holiday"
+                output = "PA Day/Holiday\n"
             else:
                 for j in data[str(message.channel.guild.id)]['users'][str(user.id)]['courses']:
                     if data[str(message.channel.guild.id)]['courses'][j]['quad'] == quad:
