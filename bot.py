@@ -292,14 +292,21 @@ async def on_message(message):
             if day == 'holiday':
                 output = "PA Day/Holiday"
             else:
-                for i in data[str(message.channel.guild.id)]['users'][str(user.id)]['courses']:
-                    if data[str(message.channel.guild.id)]['courses'][i]['quad'] == quad:
+                for j in data[str(message.channel.guild.id)]['users'][str(user.id)]['courses']:
+                    if data[str(message.channel.guild.id)]['courses'][j]['quad'] == quad:
                             if data[str(message.channel.guild.id)]['courses'][i]['in-school'] == day:
-                                output = i + " (" + data[str(message.channel.guild.id)]['courses'][i]['teacher'] + ") - In School\n" + output
+                                output = j + " (" + data[str(message.channel.guild.id)]['courses'][i]['teacher'] + ") - In School\n" + output
                             elif data[str(message.channel.guild.id)]['courses'][i]['independent'] == day:
-                                output = i + " (" + data[str(message.channel.guild.id)]['courses'][i]['teacher'] + ") - Independent\n" + output
+                                output = j + " (" + data[str(message.channel.guild.id)]['courses'][i]['teacher'] + ") - Independent\n" + output
                             else:
-                                output += i + " (" + data[str(message.channel.guild.id)]['courses'][i]['teacher'] + ") - Online Afternoon\n"
+                                output += j + " (" + data[str(message.channel.guild.id)]['courses'][i]['teacher'] + ") - Online Afternoon\n"
+                    # append events for course on day in newline
+                    for k in data[str(message.channel.guild.id)]['courses'][j]['events']:
+                        if k['date'] < date.strftime('%Y/%m/%d'): # skip all earlier events
+                            continue
+                        if k['date'] > date.strftime('%Y/%m/%d'): # events are date-sorted
+                            break
+                        output += "\n*" + k['name'] + "*" # italics
             if len(output) == 0:
                 await message.channel.send("**"+str(user)+"** has no courses added for this quad, to view a list of courses use `$list` and use `$join` to join the course")
                 return
@@ -418,7 +425,7 @@ async def on_message(message):
             if len(content[1]) > 1:
                 if len(data[str(message.channel.guild.id)]['courses'][content[1].upper()]['events']) == 0:
                     await message.channel.send("There are no events for this course, add an event using `$addevent [code] [date] [event_title]`")
-                else: 
+                else:
                     output =""
                     remove = []
                     for i in data[str(message.channel.guild.id)]['courses'][content[1].upper()]['events']:
@@ -434,7 +441,7 @@ async def on_message(message):
                         updateFile()
                     embed = discord.Embed(title="Events - {0}".format(content[1].upper()), description=output, color=0x0160a7)
                     embed.set_footer(text="Use the $addevent command to add upcoming tests, assignments, etc")
-                    await message.channel.send(embed=embed)  
+                    await message.channel.send(embed=embed)
 
     elif message.content.lower().startswith('$delevent'):
         content = message.content.split()
@@ -449,11 +456,11 @@ async def on_message(message):
                 data[str(message.channel.guild.id)]['courses'][content[1].upper()]['events'] = []
                 updateFile()
             if len(content) > 4:
-                content[3] = " ".join(content[3:]) 
+                content[3] = " ".join(content[3:])
             if len(content[2]) > 1:
                 date = None
                 try:
-                    date = datetime.datetime.strptime(content[2],'%Y-%m-%d')      
+                    date = datetime.datetime.strptime(content[2],'%Y-%m-%d')
                 except ValueError:
                     try:
                         date = datetime.datetime.strptime(content[2],'%Y/%m/%d')
