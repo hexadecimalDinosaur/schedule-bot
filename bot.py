@@ -314,7 +314,7 @@ async def on_message(message):
                         break
                     if day == 'holiday': # only specify course on holidays
                         output += j + ": "
-                    output += "*" + k['name'] + "*" # italics
+                    output += "*" + k['name'] + "*\n" # italics
             if len(output) == 0:
                 await message.channel.send("**"+str(user)+"** has no courses added for this quad, to view a list of courses use `$list` and use `$join` to join the course")
                 return
