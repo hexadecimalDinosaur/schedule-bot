@@ -301,17 +301,18 @@ async def on_message(message):
                         else:
                             output += j + " (" + data[str(message.channel.guild.id)]['courses'][i]['teacher'] + ") - Online Afternoon\n"
             for j in data[str(message.channel.guild.id)]['users'][str(user.id)]['courses']:
-                if len(data[str(message.channel.guild.id)]['courses'][j]['events']) == 0: # check if events exist to avoid KeyError
-                    continue
                 # append events for course on day in newline
-                for k in data[str(message.channel.guild.id)]['courses'][j]['events']:
-                    if k['date'] < date.strftime('%Y/%m/%d'): # skip all earlier events
-                        continue
-                    if k['date'] > date.strftime('%Y/%m/%d'): # events are date-sorted
-                        break
-                    if day == 'holiday': # only specify course on holidays
-                        output += j + ": "
-                    output += "*" + k['name'] + "*" # italics
+                try:
+                    for k in data[str(message.channel.guild.id)]['courses'][j]['events']:
+                        if k['date'] < date.strftime('%Y/%m/%d'): # skip all earlier events
+                            continue
+                        if k['date'] > date.strftime('%Y/%m/%d'): # events are date-sorted
+                            break
+                        if day == 'holiday': # only specify course on holidays
+                            output += j + ": "
+                        output += "*" + k['name'] + "*" # italics
+                except KeyError: # no events
+                    continue
             if len(output) == 0:
                 await message.channel.send("**"+str(user)+"** has no courses added for this quad, to view a list of courses use `$list` and use `$join` to join the course")
                 return
