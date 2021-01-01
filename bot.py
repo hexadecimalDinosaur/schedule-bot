@@ -229,11 +229,14 @@ async def on_message(message):
         quad = getQuad(date[0],date[1],date[2])
         day = getDay(date[0],date[1],date[2])
         if day == 'weekend':
-            await message.channel.send("It's the weekend! No classes!")
+            header = ""
+            output = "It's the weekend! No classes!\n"
         elif day == 'holiday':
-            await message.channel.send("It's a PA day or holiday! No classes!")
+            header = "PA Day/Holiday"
+            output = ""
         elif day == 'end':
-            await message.channel.send("That date is past the end of the year")
+            header = ""
+            output = "That date is past the end of the year."
         else:
             output = ""
             morning = ""
@@ -249,6 +252,19 @@ async def on_message(message):
                     else:
                         afternoon += i + " (" + data[str(message.channel.guild.id)]['courses'][i]['teacher'] + ") - "
                         afternoon += "Online Afternoon Class\n"
+                    # add event information
+                    if 'events' not in data[str(message.channel.guild.id)]['courses'][i].keys(): # check if events exist to avoid KeyError, otherwise create Key
+                        data[str(message.channel.guild.id)]['courses'][i]['events'] = []
+                        updateFile()
+                    if len(data[str(message.channel.guild.id)]['courses'][i]['events']) == 0:
+                        continue
+                    # append events for course on day in newline
+                    for j in data[str(message.channel.guild.id)]['courses'][i]['events']:
+                        if j['date'] < date.strftime('%Y/%m/%d'): # skip all earlier events
+                            continue
+                        if j['date'] > date.strftime('%Y/%m/%d'): # events are date-sorted
+                            break
+                        output += "*" + j['name'] + "*\n" # italics
             output = morning+afternoon
             if output == "":
                 await message.channel.send("<@"+str(message.author.id)+"> you are not in any classes for quad "+str(quad)+". Join your courses using the `$join` command")
@@ -257,9 +273,25 @@ async def on_message(message):
                 date[1] = "0"+str(date[1])
             if len(str(date[2])) < 2:
                 date[2] = "0"+str(date[2])
-            embed=discord.Embed(color=0x0160a7, title="{}/{}/{} - Quad {} - Day {}".format(date[0],date[1],date[2],quad, day), description=output)
-            embed.set_author(name=str(message.author),icon_url=message.author.avatar_url)
-            await message.channel.send(embed=embed)
+            header = "{}/{}/{} - Quad {} - Day {}".format(date[0],date[1],date[2],quad, day)
+        if day == 'weekend' or day == 'holiday' or day == 'end':
+            # add event information
+            for i in data[str(message.channel.guild.id)]['users'][str(user.id)]['courses']:
+                if 'events' not in data[str(message.channel.guild.id)]['courses'][j].keys(): # check if events exist to avoid KeyError, otherwise create Key
+                    data[str(message.channel.guild.id)]['courses'][i]['events'] = []
+                    updateFile()
+                if len(data[str(message.channel.guild.id)]['courses'][i]['events']) == 0:
+                    continue
+                # append events for course on day in newline
+                for j in data[str(message.channel.guild.id)]['courses'][i]['events']:
+                    if j['date'] < date.strftime('%Y/%m/%d'): # skip all earlier events
+                        continue
+                    if j['date'] > date.strftime('%Y/%m/%d'): # events are date-sorted
+                        break
+                    output += j + ": *" + j['name'] + "*\n" # italics
+        embed=discord.Embed(color=0x0160a7, title=header, description=output)
+        embed.set_author(name=str(message.author),icon_url=message.author.avatar_url)
+        await message.channel.send(embed=embed)
 
     elif message.content.lower().startswith('$week'):
         user = message.author
