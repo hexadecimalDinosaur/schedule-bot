@@ -5,16 +5,10 @@ import json
 import datetime
 import asyncio
 
-async def reminder (message, event_name, event_date, course):
-    while True:
-        await asyncio.sleep (2)
-        if 'events' not in data[str(message.channel.guild.id)]['courses'][course].keys(): # check if events exist to avoid KeyError, otherwise create Key
-            data[str(message.channel.guild.id)]['courses'][course]['events'] = []
-            updateFile()
-        if event_name not in data[str(message.channel.guild.id)]['courses'][course]['events']: # event has been deleted
-            return
-        if event_date - timedelta (1) > datetime.now:
-            await message.channel.send ("@" + course + " " + event_name)
+async def test (message):
+    await message.channel.send  ("message a")
+    await asyncio.sleep (10)
+    await message.channel.send ("message b")
 
 def getDay(year,month,day):
     date = datetime.datetime(year,month,day)
@@ -96,6 +90,9 @@ async def on_message(message):
 
     if message.content.lower().startswith('$ping'):
         await message.channel.send('<:ping_pong:772097617932320768> Pong! `{0}ms`'.format(int(client.latency*1000)))
+
+    elif message.content.lower().startswith('$test'):
+        await test (message)
 
     elif message.content.lower().startswith('$about'):
         embed=discord.Embed(title="Schedule Bot", url="https://github.com/UserBlackBox/schedule-bot", description="Discord bot for timetable information based on the TDSB 2020 quadmester model", color=0x0160a7)
@@ -436,7 +433,7 @@ async def on_message(message):
             await message.channel.send("This command has 3 argument `$addevent [code] [date] [event_title]`")
         elif content[1].upper() not in set(data[str(message.channel.guild.id)]['courses'].keys()):
             await message.channel.send("This class does not exit. Contact your admin to add any new courses.")
-        elif str(message.author.id) not in data[str(message.channel.guild.id)]['users'].keys() or content[1].upper() not in set(data[str(message.channel.guild.id)]['users'][str(message.author.id)]['courses'].keys()):
+        elif content[1].upper() not in set(data[str(message.channel.guild.id)]['users'][str(message.author.id)]['courses']):
             await message.channel.send("You are not in this class")
         else:
             if 'events' not in set(data[str(message.channel.guild.id)]['courses'][content[1].upper()].keys()):
@@ -461,7 +458,6 @@ async def on_message(message):
                     except ValueError:
                         await message.channel.send("Please specify dates in `YYYY/MM/DD` or `YYYY-MM-DD`")
                         return
-            await reminder (message, content[3], content[2], content[1])
 
     elif message.content.lower().startswith('$getevents'):
         content = message.content.split()
@@ -469,7 +465,7 @@ async def on_message(message):
             await message.channel.send("This command has 1 argument `$getevents [code]`")
         elif content[1].upper() not in set(data[str(message.channel.guild.id)]['courses'].keys()):
             await message.channel.send("This class does not exit. Contact your admin to add any new courses.")
-        elif str(message.author.id) not in data[str(message.channel.guild.id)]['users'].keys() or content[1].upper() not in set(data[str(message.channel.guild.id)]['users'][str(message.author.id)]['courses'].keys()):
+        elif content[1].upper() not in set(data[str(message.channel.guild.id)]['users'][str(message.author.id)]['courses']):
             await message.channel.send("You are not in this class")
         else:
             if 'events' not in set(data[str(message.channel.guild.id)]['courses'][content[1].upper()].keys()):
