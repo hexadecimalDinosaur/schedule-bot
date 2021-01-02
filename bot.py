@@ -5,10 +5,16 @@ import json
 import datetime
 import asyncio
 
-async def test (message):
-    await message.channel.send  ("message a")
-    await asyncio.sleep (10)
-    await message.channel.send ("message b")
+async def reminder (message, event_name, event_date, course):
+    while True:
+        await asyncio.sleep (2)
+        if 'events' not in data[str(message.channel.guild.id)]['courses'][i].keys(): # check if events exist to avoid KeyError, otherwise create Key
+            data[str(message.channel.guild.id)]['courses'][i]['events'] = []
+            updateFile()
+        if event_name not in data[str(message.channel.guild.id)]['courses'][i]['events']: # event has been deleted
+            return
+        if event_date - timedelta (1) > datetime.now:
+            await message.channel.send ("@" + course + " " + event_name)
 
 def getDay(year,month,day):
     date = datetime.datetime(year,month,day)
@@ -90,9 +96,6 @@ async def on_message(message):
 
     if message.content.lower().startswith('$ping'):
         await message.channel.send('<:ping_pong:772097617932320768> Pong! `{0}ms`'.format(int(client.latency*1000)))
-
-    elif message.content.lower().startswith('$test'):
-        await test (message)
 
     elif message.content.lower().startswith('$about'):
         embed=discord.Embed(title="Schedule Bot", url="https://github.com/UserBlackBox/schedule-bot", description="Discord bot for timetable information based on the TDSB 2020 quadmester model", color=0x0160a7)
@@ -458,6 +461,7 @@ async def on_message(message):
                     except ValueError:
                         await message.channel.send("Please specify dates in `YYYY/MM/DD` or `YYYY-MM-DD`")
                         return
+            await reminder (message, content[3], content[2], content[1])
 
     elif message.content.lower().startswith('$getevents'):
         content = message.content.split()
