@@ -465,6 +465,9 @@ async def on_message(message):
 
     elif message.content.lower().startswith('$getevents'):
         content = message.content.split()
+        if str(message.author.id) not in data[str(message.channel.guild.id)]['users'].keys(): # check if user exists to avoid KeyError, otherwise create Key
+            data[str(message.channel.guild.id)]['users'][str(message.author.id)] = ['courses':{}]
+            updateFile()
         if len(content) < 2:
             await message.channel.send("This command has 1 argument `$getevents [code]`")
         elif content[1].upper() not in set(data[str(message.channel.guild.id)]['courses'].keys()):
