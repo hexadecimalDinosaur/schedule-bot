@@ -300,7 +300,7 @@ async def on_message(message):
                         continue
                     if datetime.datetime.strptime(j['date'], "%Y/%m/%d") > datetime.datetime(date[0], date[1], date[2]): # skip all later events
                         break
-                    output += j + ": *" + j['name'] + "*\n" # italics
+                    output += i + ": *" + j['name'] + "*\n" # italics
         embed=discord.Embed(color=0x0160a7, title=header, description=output)
         embed.set_author(name=str(message.author),icon_url=message.author.avatar_url)
         await message.channel.send(embed=embed)
