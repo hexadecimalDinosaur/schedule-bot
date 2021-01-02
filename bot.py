@@ -296,10 +296,10 @@ async def on_message(message):
                     continue
                 # append events for course on day in newline
                 for j in data[str(message.channel.guild.id)]['courses'][i]['events']:
-                    if j['date'] < "{}/{}/{}".format(date[0],date[1],date[2]): # skip all earlier events
+                    if j['date'] < datetime.date(date[0], date[1], date[2]): # skip all earlier events
                         continue
-                    if j['date'] > "{}/{}/{}".format(date[0],date[1],date[2]): # skip all later events
-                        continue
+                    if j['date'] > datetime.date(date[0], date[1], date[2]): # skip all later events
+                        break
                     output += j + ": *" + j['name'] + "*\n" # italics
         embed=discord.Embed(color=0x0160a7, title=header, description=output)
         embed.set_author(name=str(message.author),icon_url=message.author.avatar_url)
