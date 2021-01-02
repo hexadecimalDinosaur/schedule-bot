@@ -298,8 +298,8 @@ async def on_message(message):
                 for j in data[str(message.channel.guild.id)]['courses'][i]['events']:
                     if j['date'] < "{}/{}/{}".format(date[0],date[1],date[2]): # skip all earlier events
                         continue
-                    if j['date'] > "{}/{}/{}".format(date[0],date[1],date[2]): # events are date-sorted
-                        break
+                    if j['date'] > "{}/{}/{}".format(date[0],date[1],date[2]): # skip all later events
+                        continue
                     output += j + ": *" + j['name'] + "*\n" # italics
         embed=discord.Embed(color=0x0160a7, title=header, description=output)
         embed.set_author(name=str(message.author),icon_url=message.author.avatar_url)
