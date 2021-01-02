@@ -288,7 +288,7 @@ async def on_message(message):
             header = "{}/{}/{} - Quad {} - Day {}".format(date[0],date[1],date[2],quad, day)
         if day == 'weekend' or day == 'holiday' or day == 'end':
             # add event information
-            for i in data[str(message.channel.guild.id)]['users'][str(user.id)]['courses']:
+            for i in data[str(message.channel.guild.id)]['users'][str(message.author.id)]['courses']:
                 if 'events' not in data[str(message.channel.guild.id)]['courses'][j].keys(): # check if events exist to avoid KeyError, otherwise create Key
                     data[str(message.channel.guild.id)]['courses'][i]['events'] = []
                     updateFile()
