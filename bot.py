@@ -7,7 +7,7 @@ import asyncio
 
 async def test (message):
     await message.channel.send  ("message a")
-    asyncio.sleep (10)
+    await asyncio.sleep (10)
     await message.channel.send ("message b")
 
 def getDay(year,month,day):
