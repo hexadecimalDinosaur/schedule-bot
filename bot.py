@@ -183,7 +183,7 @@ async def on_message(message):
             await message.channel.send(str(message.author)+" has left "+content[1].upper())
 
     elif message.content.lower().startswith('$test'):
-        test ()
+        asyncio.run (test ())
 
     elif message.content.lower().startswith('$schedule'):
         if str(message.author.id) not in set(data[str(message.channel.guild.id)]['users'].keys()):
