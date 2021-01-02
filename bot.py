@@ -91,6 +91,9 @@ async def on_message(message):
     if message.content.lower().startswith('$ping'):
         await message.channel.send('<:ping_pong:772097617932320768> Pong! `{0}ms`'.format(int(client.latency*1000)))
 
+    elif message.content.lower().startswith('$test'):
+        await test ()
+
     elif message.content.lower().startswith('$about'):
         embed=discord.Embed(title="Schedule Bot", url="https://github.com/UserBlackBox/schedule-bot", description="Discord bot for timetable information based on the TDSB 2020 quadmester model", color=0x0160a7)
         embed.set_thumbnail(url="https://cdn.discordapp.com/avatars/771927466267770910/700c2fe2da53caf2a60041e7d2bf21b4.png?size=2048")
@@ -181,9 +184,6 @@ async def on_message(message):
             data[str(message.channel.guild.id)]['users'][str(message.author.id)]['courses'].remove(content[1].upper())
             updateFile()
             await message.channel.send(str(message.author)+" has left "+content[1].upper())
-
-    elif message.content.lower().startswith('$test'):
-        asyncio.run (test ())
 
     elif message.content.lower().startswith('$schedule'):
         if str(message.author.id) not in set(data[str(message.channel.guild.id)]['users'].keys()):
