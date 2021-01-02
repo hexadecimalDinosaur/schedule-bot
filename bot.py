@@ -3,6 +3,12 @@ import discord
 import logging
 import json
 import datetime
+import asyncio
+
+async def test ():
+    await message.channel.send  ("message a")
+    asyncio.sleep (10)
+    await message.channel.send ("message b")
 
 def getDay(year,month,day):
     date = datetime.datetime(year,month,day)
@@ -175,6 +181,9 @@ async def on_message(message):
             data[str(message.channel.guild.id)]['users'][str(message.author.id)]['courses'].remove(content[1].upper())
             updateFile()
             await message.channel.send(str(message.author)+" has left "+content[1].upper())
+
+    elif message.content.lower().startswith('$test'):
+        test ()
 
     elif message.content.lower().startswith('$schedule'):
         if str(message.author.id) not in set(data[str(message.channel.guild.id)]['users'].keys()):
