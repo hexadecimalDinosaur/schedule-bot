@@ -436,7 +436,7 @@ async def on_message(message):
             await message.channel.send("This command has 3 argument `$addevent [code] [date] [event_title]`")
         elif content[1].upper() not in set(data[str(message.channel.guild.id)]['courses'].keys()):
             await message.channel.send("This class does not exit. Contact your admin to add any new courses.")
-        elif str(message.author.id) not in data[str(message.channel.guild.id)]['users'].keys() or content[1].upper() not in set(data[str(message.channel.guild.id)]['users'][str(message.author.id)]['courses']).keys():
+        elif str(message.author.id) not in data[str(message.channel.guild.id)]['users'].keys() or content[1].upper() not in set(data[str(message.channel.guild.id)]['users'][str(message.author.id)]['courses'].keys()):
             await message.channel.send("You are not in this class")
         else:
             if 'events' not in set(data[str(message.channel.guild.id)]['courses'][content[1].upper()].keys()):
@@ -469,7 +469,7 @@ async def on_message(message):
             await message.channel.send("This command has 1 argument `$getevents [code]`")
         elif content[1].upper() not in set(data[str(message.channel.guild.id)]['courses'].keys()):
             await message.channel.send("This class does not exit. Contact your admin to add any new courses.")
-        elif str(message.author.id) not in data[str(message.channel.guild.id)]['users'].keys() or content[1].upper() not in set(data[str(message.channel.guild.id)]['users'][str(message.author.id)]['courses']).keys():
+        elif str(message.author.id) not in data[str(message.channel.guild.id)]['users'].keys() or content[1].upper() not in set(data[str(message.channel.guild.id)]['users'][str(message.author.id)]['courses'].keys()):
             await message.channel.send("You are not in this class")
         else:
             if 'events' not in set(data[str(message.channel.guild.id)]['courses'][content[1].upper()].keys()):
