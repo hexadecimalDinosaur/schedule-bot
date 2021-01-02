@@ -9,9 +9,9 @@ async def reminder (message, event_name, event_date, course):
     while True:
         await asyncio.sleep (2)
         if 'events' not in data[str(message.channel.guild.id)]['courses'][i].keys(): # check if events exist to avoid KeyError, otherwise create Key
-            data[str(message.channel.guild.id)]['courses'][i]['events'] = []
+            data[str(message.channel.guild.id)]['courses'][course]['events'] = []
             updateFile()
-        if event_name not in data[str(message.channel.guild.id)]['courses'][i]['events']: # event has been deleted
+        if event_name not in data[str(message.channel.guild.id)]['courses'][course]['events']: # event has been deleted
             return
         if event_date - timedelta (1) > datetime.now:
             await message.channel.send ("@" + course + " " + event_name)
