@@ -436,7 +436,7 @@ async def on_message(message):
             await message.channel.send("This command has 3 argument `$addevent [code] [date] [event_title]`")
         elif content[1].upper() not in set(data[str(message.channel.guild.id)]['courses'].keys()):
             await message.channel.send("This class does not exit. Contact your admin to add any new courses.")
-        elif content[1].upper() not in set(data[str(message.channel.guild.id)]['users'][str(message.author.id)]['courses']):
+        elif str(message.author.id) not in data[str(message.channel.guild.id)]['users'].keys() or content[1].upper() not in set(data[str(message.channel.guild.id)]['users'][str(message.author.id)]['courses']):
             await message.channel.send("You are not in this class")
         else:
             if 'events' not in set(data[str(message.channel.guild.id)]['courses'][content[1].upper()].keys()):
@@ -465,14 +465,11 @@ async def on_message(message):
 
     elif message.content.lower().startswith('$getevents'):
         content = message.content.split()
-        if str(message.author.id) not in data[str(message.channel.guild.id)]['users'].keys(): # check if user exists to avoid KeyError, otherwise create Key
-            data[str(message.channel.guild.id)]['users'][str(message.author.id)] = []
-            updateFile()
         if len(content) < 2:
             await message.channel.send("This command has 1 argument `$getevents [code]`")
         elif content[1].upper() not in set(data[str(message.channel.guild.id)]['courses'].keys()):
             await message.channel.send("This class does not exit. Contact your admin to add any new courses.")
-        elif content[1].upper() not in set(data[str(message.channel.guild.id)]['users'][str(message.author.id)]['courses']):
+        elif str(message.author.id) not in data[str(message.channel.guild.id)]['users'].keys() or content[1].upper() not in set(data[str(message.channel.guild.id)]['users'][str(message.author.id)]['courses']):
             await message.channel.send("You are not in this class")
         else:
             if 'events' not in set(data[str(message.channel.guild.id)]['courses'][content[1].upper()].keys()):
