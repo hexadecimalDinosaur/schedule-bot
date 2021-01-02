@@ -5,7 +5,7 @@ import json
 import datetime
 import asyncio
 
-async def test ():
+async def test (message):
     await message.channel.send  ("message a")
     asyncio.sleep (10)
     await message.channel.send ("message b")
@@ -92,7 +92,7 @@ async def on_message(message):
         await message.channel.send('<:ping_pong:772097617932320768> Pong! `{0}ms`'.format(int(client.latency*1000)))
 
     elif message.content.lower().startswith('$test'):
-        await test ()
+        await test (message)
 
     elif message.content.lower().startswith('$about'):
         embed=discord.Embed(title="Schedule Bot", url="https://github.com/UserBlackBox/schedule-bot", description="Discord bot for timetable information based on the TDSB 2020 quadmester model", color=0x0160a7)
