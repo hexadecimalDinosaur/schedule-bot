@@ -487,39 +487,61 @@ async def on_message(message):
 
     elif message.content.lower().startswith('$getevents'):
         content = message.content.split()
-        try:
-            if len(content) < 2:
-                await message.channel.send("This command has 1 argument `$getevents [code]`")
-            elif content[1].upper() not in set(data[str(message.channel.guild.id)]['courses'].keys()):
-                await message.channel.send("This class does not exist. Contact your admin to add any new courses.")
-            elif str(message.author.id) not in data[str(message.channel.guild.id)]['users'].keys() or content[1].upper() not in set(data[str(message.channel.guild.id)]['users'][str(message.author.id)]['courses']):
-                await message.channel.send("You are not in this class")
-        except TypeError:
-            await message.channel.send("You are not in this class")
-        else:
-            if 'events' not in set(data[str(message.channel.guild.id)]['courses'][content[1].upper()].keys()):
-                data[str(message.channel.guild.id)]['courses'][content[1].upper()]['events'] = []
+        user = message.author
+        courses = []
+        if len(message.mentions) >= 1:
+            user = message.mentions[0]
+        elif len(content) > 1:
+            if content[1].isdigit() and message.channel.guild.get_member(int(content[1])) != None:
+                    user = message.channel.guild.get_member(int(content[1]))
+            else:
+                user = message.channel.guild.get_member_named(" ".join(content[1:]))
+                if user == None:
+                    user = message.author
+                    try:
+                        if content[1].upper() not in set(data[str(message.channel.guild.id)]['courses'].keys()):
+                            await message.channel.send("This class does not exist. Contact your admin to add any new courses.")
+                            return
+                        elif str(user.id) not in data[str(message.channel.guild.id)]['users'].keys() or content[1].upper() not in set(data[str(message.channel.guild.id)]['users'][str(user.id)]['courses']):
+                            await message.channel.send("This user is not in this class.")
+                            return
+                    except TypeError:
+                        await message.channel.send("This user is not in this class.")
+                    courses = [content[1].upper()]
+        if not courses:
+            try:
+                courses = [course for course in data[str(message.channel.guild.id)]['users'][str(user.id)]['courses']]
+            except KeyError:
+                await message.channel.send("This user is not in any classes. Use `$join` to join classes, and `$list` to see available classes.")
+                return
+            if len(courses) < 1:
+                await message.channel.send("This user is not in any classes. Use `$join` to join classes, and `$list` to see available classes.")
+                return
+        embed = discord.Embed(color=0x0160a7, title="Events")
+        for course in courses:
+            if 'events' not in set(data[str(message.channel.guild.id)]['courses'][course].keys()):
+                data[str(message.channel.guild.id)]['courses'][course]['events'] = []
                 updateFile()
-            if len(content[1]) > 1:
-                if len(data[str(message.channel.guild.id)]['courses'][content[1].upper()]['events']) == 0:
-                    await message.channel.send("There are no events for this course, add an event using `$addevent [code] [date] [event_title]`")
-                else:
-                    output =""
-                    remove = []
-                    for i in data[str(message.channel.guild.id)]['courses'][content[1].upper()]['events']:
-                        if i['date'] < datetime.datetime.today().strftime('%Y/%m/%d'):
-                            remove.append(i)
-                            continue
-                        output+=i['date'] +" : "
-                        output+= i['name']
-                        output += "\n "
-                    if len(remove)>=1:
-                        for i in remove:
-                            data[str(message.channel.guild.id)]['courses'][content[1].upper()]['events'].remove(i)
-                        updateFile()
-                    embed = discord.Embed(title="Events - {0}".format(content[1].upper()), description=output, color=0x0160a7)
-                    embed.set_footer(text="Use the $addevent command to add upcoming tests, assignments, etc")
-                    await message.channel.send(embed=embed)
+            if len(data[str(message.channel.guild.id)]['courses'][course]['events']) == 0:
+                await message.channel.send("There are no events for this course, add an event using `$addevent [code] [date] [event_title]`")
+            else:
+                output =""
+                remove = []
+                for i in data[str(message.channel.guild.id)]['courses'][course]['events']:
+                    if i['date'] < datetime.datetime.today().strftime('%Y/%m/%d'):
+                        remove.append(i)
+                        continue
+                    output+=i['date'] +" : "
+                    output+= i['name']
+                    output += "\n "
+                if len(remove)>=1:
+                    for i in remove:
+                        data[str(message.channel.guild.id)]['courses'][course]['events'].remove(i)
+                    updateFile()
+                embed.add_field(name=course, value=output, inline=False)
+        embed.set_author(name=str(user),icon_url=user.avatar_url)
+        embed.set_footer(text="Use the `$addevent` command to add upcoming tests, assignments, etc")
+        await message.channel.send(embed=embed)
 
     elif message.content.lower().startswith('$delevent'):
         content = message.content.split()
