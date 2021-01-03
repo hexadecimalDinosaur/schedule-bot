@@ -500,26 +500,25 @@ async def on_message(message):
             if 'events' not in set(data[str(message.channel.guild.id)]['courses'][content[1].upper()].keys()):
                 data[str(message.channel.guild.id)]['courses'][content[1].upper()]['events'] = []
                 updateFile()
-            if len(content[1]) > 1:
-                if len(data[str(message.channel.guild.id)]['courses'][content[1].upper()]['events']) == 0:
-                    await message.channel.send("There are no events for this course, add an event using `$addevent [code] [date] [event_title]`")
-                else:
-                    output =""
-                    remove = []
-                    for i in data[str(message.channel.guild.id)]['courses'][content[1].upper()]['events']:
-                        if i['date'] < datetime.datetime.today().strftime('%Y/%m/%d'):
-                            remove.append(i)
-                            continue
-                        output+=i['date'] +" : "
-                        output+= i['name']
-                        output += "\n "
-                    if len(remove)>=1:
-                        for i in remove:
-                            data[str(message.channel.guild.id)]['courses'][content[1].upper()]['events'].remove(i)
-                        updateFile()
-                    embed = discord.Embed(title="Events - {0}".format(content[1].upper()), description=output, color=0x0160a7)
-                    embed.set_footer(text="Use the $addevent command to add upcoming tests, assignments, etc")
-                    await message.channel.send(embed=embed)
+            if len(data[str(message.channel.guild.id)]['courses'][content[1].upper()]['events']) == 0:
+                await message.channel.send("There are no events for this course, add an event using `$addevent [code] [date] [event_title]`")
+            else:
+                output =""
+                remove = []
+                for i in data[str(message.channel.guild.id)]['courses'][content[1].upper()]['events']:
+                    if i['date'] < datetime.datetime.today().strftime('%Y/%m/%d'):
+                        remove.append(i)
+                        continue
+                    output+=i['date'] +" : "
+                    output+= i['name']
+                    output += "\n "
+                if len(remove)>=1:
+                    for i in remove:
+                        data[str(message.channel.guild.id)]['courses'][content[1].upper()]['events'].remove(i)
+                    updateFile()
+                embed = discord.Embed(title="Events - {0}".format(content[1].upper()), description=output, color=0x0160a7)
+                embed.set_footer(text="Use the $addevent command to add upcoming tests, assignments, etc")
+                await message.channel.send(embed=embed)
 
     elif message.content.lower().startswith('$delevent'):
         content = message.content.split()
