@@ -339,11 +339,12 @@ async def on_message(message):
             else:
                 for j in data[str(message.channel.guild.id)]['users'][str(user.id)]['courses']:
                     # make sure events key exists
+                    events = True
                     if 'events' not in data[str(message.channel.guild.id)]['courses'][j].keys(): # check if events exist to avoid KeyError, otherwise create Key
                         data[str(message.channel.guild.id)]['courses'][j]['events'] = []
                         updateFile()
                     if len(data[str(message.channel.guild.id)]['courses'][j]['events']) == 0:
-                        events = True
+                        events = False
                     if data[str(message.channel.guild.id)]['courses'][j]['quad'] == quad:
                         if data[str(message.channel.guild.id)]['courses'][j]['in-school'] == day:
                             morning = j + " (" + data[str(message.channel.guild.id)]['courses'][j]['teacher'] + ") - In School\n" + output
@@ -526,7 +527,8 @@ async def on_message(message):
                 data[str(message.channel.guild.id)]['courses'][course]['events'] = []
                 updateFile()
             if len(data[str(message.channel.guild.id)]['courses'][course]['events']) == 0:
-                await message.channel.send("There are no events for this course, add an event using `$addevent [code] [date] [event_title]`")
+                await message.channel.send("There are no events for this course, add an event using `$addevent [code] [date] [event_title]`.")
+                return
             else:
                 output =""
                 remove = []
