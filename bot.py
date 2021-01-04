@@ -527,8 +527,7 @@ async def on_message(message):
                 data[str(message.channel.guild.id)]['courses'][course]['events'] = []
                 updateFile()
             if len(data[str(message.channel.guild.id)]['courses'][course]['events']) == 0:
-                await message.channel.send("There are no events for this course, add an event using `$addevent [code] [date] [event_title]`.")
-                return
+                continue
             else:
                 output =""
                 remove = []
@@ -543,15 +542,19 @@ async def on_message(message):
                     for i in remove:
                         data[str(message.channel.guild.id)]['courses'][course]['events'].remove(i)
                     updateFile()
-                embed.add_field(name=course, value=output, inline=False)
-        embed.set_author(name=str(user),icon_url=user.avatar_url)
-        embed.set_footer(text="Use the `$addevent` command to add upcoming tests, assignments, etc")
-        await message.channel.send(embed=embed)
+                if output:
+                    embed.add_field(name=course, value=output, inline=False)
+        if embed.fields:
+            embed.set_author(name=str(user),icon_url=user.avatar_url)
+            embed.set_footer(text="Use the `$addevent` command to add upcoming tests, assignments, etc.")
+            await message.channel.send(embed=embed)
+        else:
+            await message.channel.send("This user's courses have no upcoming events. To add an event, use `$addevent [code] [date] [event_title]`.")
 
     elif message.content.lower().startswith('$delevent'):
         content = message.content.split()
         if len(content) < 4:
-            await message.channel.send("This command has 3 argument `$delevent [code] [date] [event_title]`")
+            await message.channel.send("This command has 3 argument `$delevent [code] [date] [event_title]`.")
         elif content[1].upper() not in set(data[str(message.channel.guild.id)]['courses'].keys()):
             await message.channel.send("This class does not exist. Contact your admin to add any new courses.")
         elif content[1].upper() not in set(data[str(message.channel.guild.id)]['users'][str(message.author.id)]['courses']):
