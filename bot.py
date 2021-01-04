@@ -327,7 +327,7 @@ async def on_message(message):
         quad = getQuad(date.year,date.month,date.day)
         embed = discord.Embed(color=0x0160a7, title="Week of {} - Quad {}".format(date.strftime('%Y/%m/%d'), quad))
         if str(user.id) not in set(data[str(message.channel.guild.id)]['users'].keys()):
-            await message.channel.send("**"+str(user)+"** has no courses added for this quad, to view a list of courses use `$list` and use `$join` to join the course")
+            await message.channel.send("**"+str(user)+"** has no courses added for this quad, to view a list of courses use `$list` and use `$join` to join the course.")
             return
         for i in range(5):
             output = ""
@@ -339,48 +339,52 @@ async def on_message(message):
             else:
                 for j in data[str(message.channel.guild.id)]['users'][str(user.id)]['courses']:
                     # make sure events key exists
+                    events = True
                     if 'events' not in data[str(message.channel.guild.id)]['courses'][j].keys(): # check if events exist to avoid KeyError, otherwise create Key
                         data[str(message.channel.guild.id)]['courses'][j]['events'] = []
                         updateFile()
                     if len(data[str(message.channel.guild.id)]['courses'][j]['events']) == 0:
-                        continue
+                        events = False
                     if data[str(message.channel.guild.id)]['courses'][j]['quad'] == quad:
                         if data[str(message.channel.guild.id)]['courses'][j]['in-school'] == day:
                             morning = j + " (" + data[str(message.channel.guild.id)]['courses'][j]['teacher'] + ") - In School\n" + output
                             # append events for course on day in newline
-                            for k in data[str(message.channel.guild.id)]['courses'][j]['events']:
-                                if k['date'] < date.strftime('%Y/%m/%d'): # skip all earlier events
-                                    continue
-                                if k['date'] > date.strftime('%Y/%m/%d'): # events are date-sorted
-                                    break
-                                if day == 'holiday': # only specify course on holidays
-                                    morning += j + ": "
-                                morning += "*" + k['name'] + "*\n" # italics
+                            if events:
+                                for k in data[str(message.channel.guild.id)]['courses'][j]['events']:
+                                    if k['date'] < date.strftime('%Y/%m/%d'): # skip all earlier events
+                                        continue
+                                    if k['date'] > date.strftime('%Y/%m/%d'): # events are date-sorted
+                                        break
+                                    if day == 'holiday': # only specify course on holidays
+                                        morning += j + ": "
+                                    morning += "*" + k['name'] + "*\n" # italics
                         elif data[str(message.channel.guild.id)]['courses'][j]['independent'] == day:
                             morning = j + " (" + data[str(message.channel.guild.id)]['courses'][j]['teacher'] + ") - Independent\n" + output
                             # append events for course on day in newline
-                            for k in data[str(message.channel.guild.id)]['courses'][j]['events']:
-                                if k['date'] < date.strftime('%Y/%m/%d'): # skip all earlier events
-                                    continue
-                                if k['date'] > date.strftime('%Y/%m/%d'): # events are date-sorted
-                                    break
-                                if day == 'holiday': # only specify course on holidays
-                                    morning += j + ": "
-                                morning += "*" + k['name'] + "*\n" # italics
+                            if events:
+                                for k in data[str(message.channel.guild.id)]['courses'][j]['events']:
+                                    if k['date'] < date.strftime('%Y/%m/%d'): # skip all earlier events
+                                        continue
+                                    if k['date'] > date.strftime('%Y/%m/%d'): # events are date-sorted
+                                        break
+                                    if day == 'holiday': # only specify course on holidays
+                                        morning += j + ": "
+                                    morning += "*" + k['name'] + "*\n" # italics
                         else:
                             afternoon += j + " (" + data[str(message.channel.guild.id)]['courses'][j]['teacher'] + ") - Online Afternoon\n"
                             # append events for course on day in newline
-                            for k in data[str(message.channel.guild.id)]['courses'][j]['events']:
-                                if k['date'] < date.strftime('%Y/%m/%d'): # skip all earlier events
-                                    continue
-                                if k['date'] > date.strftime('%Y/%m/%d'): # events are date-sorted
-                                    break
-                                if day == 'holiday': # only specify course on holidays
-                                    afternoon += j + ": "
-                                afternoon += "*" + k['name'] + "*\n" # italics
+                            if events:
+                                for k in data[str(message.channel.guild.id)]['courses'][j]['events']:
+                                    if k['date'] < date.strftime('%Y/%m/%d'): # skip all earlier events
+                                        continue
+                                    if k['date'] > date.strftime('%Y/%m/%d'): # events are date-sorted
+                                        break
+                                    if day == 'holiday': # only specify course on holidays
+                                        afternoon += j + ": "
+                                    afternoon += "*" + k['name'] + "*\n" # italics
                 output = morning + afternoon
             if len(output) == 0:
-                await message.channel.send("**"+str(user)+"** has no courses added for this quad, to view a list of courses use `$list` and use `$join` to join the course")
+                await message.channel.send("**"+str(user)+"** has no courses added for this quad, to view a list of courses use `$list` and use `$join` to join the course.")
                 return
             title = date.strftime('%A')
             if day != 'holiday': title += " - Day {}".format(day)
@@ -487,25 +491,48 @@ async def on_message(message):
 
     elif message.content.lower().startswith('$getevents'):
         content = message.content.split()
-        try:
-            if len(content) < 2:
-                await message.channel.send("This command has 1 argument `$getevents [code]`")
-            elif content[1].upper() not in set(data[str(message.channel.guild.id)]['courses'].keys()):
-                await message.channel.send("This class does not exist. Contact your admin to add any new courses.")
-            elif str(message.author.id) not in data[str(message.channel.guild.id)]['users'].keys() or content[1].upper() not in set(data[str(message.channel.guild.id)]['users'][str(message.author.id)]['courses']):
-                await message.channel.send("You are not in this class")
-        except TypeError:
-            await message.channel.send("You are not in this class")
-        else:
-            if 'events' not in set(data[str(message.channel.guild.id)]['courses'][content[1].upper()].keys()):
-                data[str(message.channel.guild.id)]['courses'][content[1].upper()]['events'] = []
+        user = message.author
+        courses = []
+        if len(message.mentions) >= 1:
+            user = message.mentions[0]
+        elif len(content) > 1:
+            if content[1].isdigit() and message.channel.guild.get_member(int(content[1])) != None:
+                    user = message.channel.guild.get_member(int(content[1]))
+            else:
+                user = message.channel.guild.get_member_named(" ".join(content[1:]))
+                if user == None:
+                    user = message.author
+                    try:
+                        if content[1].upper() not in set(data[str(message.channel.guild.id)]['courses'].keys()):
+                            await message.channel.send("This class does not exist. Contact your admin to add any new courses.")
+                            return
+                        elif str(user.id) not in data[str(message.channel.guild.id)]['users'].keys() or content[1].upper() not in set(data[str(message.channel.guild.id)]['users'][str(user.id)]['courses']):
+                            await message.channel.send("This user is not in this class.")
+                            return
+                    except TypeError:
+                        await message.channel.send("This user is not in this class.")
+                    courses = [content[1].upper()]
+        if not courses:
+            try:
+                courses = [course for course in data[str(message.channel.guild.id)]['users'][str(user.id)]['courses']]
+            except KeyError:
+                await message.channel.send("This user is not in any classes. Use `$join` to join classes, and `$list` to see available classes.")
+                return
+            if len(courses) < 1:
+                await message.channel.send("This user is not in any classes. Use `$join` to join classes, and `$list` to see available classes.")
+                return
+        embed = discord.Embed(color=0x0160a7, title="Events")
+        for course in courses:
+            if 'events' not in set(data[str(message.channel.guild.id)]['courses'][course].keys()):
+                data[str(message.channel.guild.id)]['courses'][course]['events'] = []
                 updateFile()
-            if len(data[str(message.channel.guild.id)]['courses'][content[1].upper()]['events']) == 0:
-                await message.channel.send("There are no events for this course, add an event using `$addevent [code] [date] [event_title]`")
+            if len(data[str(message.channel.guild.id)]['courses'][course]['events']) == 0:
+                await message.channel.send("There are no events for this course, add an event using `$addevent [code] [date] [event_title]`.")
+                return
             else:
                 output =""
                 remove = []
-                for i in data[str(message.channel.guild.id)]['courses'][content[1].upper()]['events']:
+                for i in data[str(message.channel.guild.id)]['courses'][course]['events']:
                     if i['date'] < datetime.datetime.today().strftime('%Y/%m/%d'):
                         remove.append(i)
                         continue
@@ -514,11 +541,12 @@ async def on_message(message):
                     output += "\n "
                 if len(remove)>=1:
                     for i in remove:
-                        data[str(message.channel.guild.id)]['courses'][content[1].upper()]['events'].remove(i)
+                        data[str(message.channel.guild.id)]['courses'][course]['events'].remove(i)
                     updateFile()
-                embed = discord.Embed(title="Events - {0}".format(content[1].upper()), description=output, color=0x0160a7)
-                embed.set_footer(text="Use the $addevent command to add upcoming tests, assignments, etc")
-                await message.channel.send(embed=embed)
+                embed.add_field(name=course, value=output, inline=False)
+        embed.set_author(name=str(user),icon_url=user.avatar_url)
+        embed.set_footer(text="Use the `$addevent` command to add upcoming tests, assignments, etc")
+        await message.channel.send(embed=embed)
 
     elif message.content.lower().startswith('$delevent'):
         content = message.content.split()
