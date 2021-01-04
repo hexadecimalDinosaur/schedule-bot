@@ -327,7 +327,7 @@ async def on_message(message):
         quad = getQuad(date.year,date.month,date.day)
         embed = discord.Embed(color=0x0160a7, title="Week of {} - Quad {}".format(date.strftime('%Y/%m/%d'), quad))
         if str(user.id) not in set(data[str(message.channel.guild.id)]['users'].keys()):
-            await message.channel.send("**"+str(user)+"** has no courses added for this quad, to view a list of courses use `$list` and use `$join` to join the course")
+            await message.channel.send("**"+str(user)+"** has no courses added for this quad, to view a list of courses use `$list` and use `$join` to join the course.")
             return
         for i in range(5):
             output = ""
@@ -343,44 +343,47 @@ async def on_message(message):
                         data[str(message.channel.guild.id)]['courses'][j]['events'] = []
                         updateFile()
                     if len(data[str(message.channel.guild.id)]['courses'][j]['events']) == 0:
-                        continue
+                        events = True
                     if data[str(message.channel.guild.id)]['courses'][j]['quad'] == quad:
                         if data[str(message.channel.guild.id)]['courses'][j]['in-school'] == day:
                             morning = j + " (" + data[str(message.channel.guild.id)]['courses'][j]['teacher'] + ") - In School\n" + output
                             # append events for course on day in newline
-                            for k in data[str(message.channel.guild.id)]['courses'][j]['events']:
-                                if k['date'] < date.strftime('%Y/%m/%d'): # skip all earlier events
-                                    continue
-                                if k['date'] > date.strftime('%Y/%m/%d'): # events are date-sorted
-                                    break
-                                if day == 'holiday': # only specify course on holidays
-                                    morning += j + ": "
-                                morning += "*" + k['name'] + "*\n" # italics
+                            if events:
+                                for k in data[str(message.channel.guild.id)]['courses'][j]['events']:
+                                    if k['date'] < date.strftime('%Y/%m/%d'): # skip all earlier events
+                                        continue
+                                    if k['date'] > date.strftime('%Y/%m/%d'): # events are date-sorted
+                                        break
+                                    if day == 'holiday': # only specify course on holidays
+                                        morning += j + ": "
+                                    morning += "*" + k['name'] + "*\n" # italics
                         elif data[str(message.channel.guild.id)]['courses'][j]['independent'] == day:
                             morning = j + " (" + data[str(message.channel.guild.id)]['courses'][j]['teacher'] + ") - Independent\n" + output
                             # append events for course on day in newline
-                            for k in data[str(message.channel.guild.id)]['courses'][j]['events']:
-                                if k['date'] < date.strftime('%Y/%m/%d'): # skip all earlier events
-                                    continue
-                                if k['date'] > date.strftime('%Y/%m/%d'): # events are date-sorted
-                                    break
-                                if day == 'holiday': # only specify course on holidays
-                                    morning += j + ": "
-                                morning += "*" + k['name'] + "*\n" # italics
+                            if events:
+                                for k in data[str(message.channel.guild.id)]['courses'][j]['events']:
+                                    if k['date'] < date.strftime('%Y/%m/%d'): # skip all earlier events
+                                        continue
+                                    if k['date'] > date.strftime('%Y/%m/%d'): # events are date-sorted
+                                        break
+                                    if day == 'holiday': # only specify course on holidays
+                                        morning += j + ": "
+                                    morning += "*" + k['name'] + "*\n" # italics
                         else:
                             afternoon += j + " (" + data[str(message.channel.guild.id)]['courses'][j]['teacher'] + ") - Online Afternoon\n"
                             # append events for course on day in newline
-                            for k in data[str(message.channel.guild.id)]['courses'][j]['events']:
-                                if k['date'] < date.strftime('%Y/%m/%d'): # skip all earlier events
-                                    continue
-                                if k['date'] > date.strftime('%Y/%m/%d'): # events are date-sorted
-                                    break
-                                if day == 'holiday': # only specify course on holidays
-                                    afternoon += j + ": "
-                                afternoon += "*" + k['name'] + "*\n" # italics
+                            if events:
+                                for k in data[str(message.channel.guild.id)]['courses'][j]['events']:
+                                    if k['date'] < date.strftime('%Y/%m/%d'): # skip all earlier events
+                                        continue
+                                    if k['date'] > date.strftime('%Y/%m/%d'): # events are date-sorted
+                                        break
+                                    if day == 'holiday': # only specify course on holidays
+                                        afternoon += j + ": "
+                                    afternoon += "*" + k['name'] + "*\n" # italics
                 output = morning + afternoon
             if len(output) == 0:
-                await message.channel.send("**"+str(user)+"** has no courses added for this quad, to view a list of courses use `$list` and use `$join` to join the course")
+                await message.channel.send("**"+str(user)+"** has no courses added for this quad, to view a list of courses use `$list` and use `$join` to join the course.")
                 return
             title = date.strftime('%A')
             if day != 'holiday': title += " - Day {}".format(day)
