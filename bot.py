@@ -1,8 +1,10 @@
 from datetime import timedelta
 import discord
+from discord.ext import commands
 import logging
 import json
 import datetime
+import asyncio
 
 def getDay(year,month,day):
     date = datetime.datetime(year,month,day)
@@ -402,6 +404,33 @@ async def on_message(message):
                     except ValueError:
                         await message.channel.send("Please specify dates in `YYYY/MM/DD` or `YYYY-MM-DD`")
                         return
+                
+                if data[str(message.channel.guild.id)]['users'][str(message.author.id)]['notifs']==1:
+                    time = datetime.datetime.now()
+                    reminder_time = datetime.datetime.strptime(content[2], '%Y/%m/%d')
+                    sleep_time = str(reminder_time-time).split(" ")
+                    day = 24*60*60
+                    delay = 60*60*6
+                    print(time)
+                    print(reminder_time)
+                    print(sleep_time[0])
+                    print(day*sleep_time-delay)
+
+                    await asyncio.sleep(5)
+                    
+                    for j in data[str(message.channel.guild.id)]['courses'][content[1].upper()]['events']:
+                        if j['name']==content[3] and j['date']==content[2]:
+                            for i in data[str(message.channel.guild.id)]['users']:
+                                if data[str(message.channel.guild.id)]['users'][i]['notifs']== 1:
+                                    for x in data[str(message.channel.guild.id)]['users'][i]['courses']:
+                                        if content[1].upper()==x:
+                                            user = client.get_user(int(i))
+                                            await user.send("UPCOMING EVENT: "+content[3])
+                                            break
+                            break
+                        
+                    # while True:
+
 
     elif message.content.lower().startswith('$getevents'):
         content = message.content.split()
@@ -436,6 +465,7 @@ async def on_message(message):
                     embed.set_footer(text="Use the $addevent command to add upcoming tests, assignments, etc")
                     await message.channel.send(embed=embed)  
 
+
     elif message.content.lower().startswith('$delevent'):
         content = message.content.split()
         if len(content) < 4:
@@ -461,12 +491,31 @@ async def on_message(message):
                         await message.channel.send("Please specify dates in `YYYY/MM/DD` or `YYYY-MM-DD`")
                         return
                 try:
+                    # index = next((item for item in enumerate(data[str(message.channel.guild.id)]['courses'][content[1].upper()]['events']) if item["date"]==content[1] and item["name"]),None)
+                    # print(index)
                     data[str(message.channel.guild.id)]['courses'][content[1].upper()]['events'].remove({'date':date.strftime('%Y/%m/%d'),'name':content[3]})
                     updateFile()
                     await message.channel.send("`{0}` was removed from the {1} event board".format(content[3], content[1].upper()))
                 except ValueError:
                     await message.channel.send("The specified event was not found")
                     return
+    elif message.content.lower().startswith('$notifs'):
+        content = message.content.split()
+        if len(content) < 2:
+            try:
+                if(data[str(message.channel.guild.id)]['users'][str(message.author.id)]['notifs']==1):
+                    data[str(message.channel.guild.id)]['users'][str(message.author.id)]['notifs'] = 0
+                    await message.channel.send("You will no longer receive notifications for upcoming events. ")
+                else:
+                    data[str(message.channel.guild.id)]['users'][str(message.author.id)]['notifs'] = 1
+                    await message.channel.send("You will now receive notifications for upcoming events. ")
+                updateFile()
+            except KeyError:
+                data[str(message.channel.guild.id)]['users'][str(message.author.id)]['notifs'] = 1
+                updateFile()
+        else:
+            await message.channel.send("To receive to all notifications, enter 'notifs'. ")
+     
 
 logger = logging.getLogger('discord')
 logger.setLevel(logging.DEBUG)
