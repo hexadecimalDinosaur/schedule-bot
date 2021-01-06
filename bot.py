@@ -5,7 +5,6 @@ import logging
 import json
 import datetime
 import typing
-import asyncio
 
 def getDay(year, month, day):
     date = datetime.datetime(year,month,day)
@@ -408,7 +407,7 @@ class Schedule(commands.Cog):
                     await Date().convert(ctx, i.strip())
                     date_specified = True
                     continue
-                except:
+                except commands.ConversionError:
                     if "$schedule" in i.lower():
                         continue
                     if i.strip():
@@ -594,16 +593,15 @@ async def on_guild_join(guild:discord.guild):
     updateFile()
     print(f'Joined new server: {guild.name}\nid:{str(guild.id)}')
 
-@bot.command(hidden=True, help=f"Gets latency for bot")
+@bot.command(hidden=True, help="Gets latency for bot")
 async def ping(ctx):
     await ctx.send ('<:ping_pong:772097617932320768> Pong! `{0}ms`'.format(int(bot.latency*1000)))
 
-@bot.command(help=f"Info about this bot")
+@bot.command(help="Info about this bot")
 async def about(ctx):
     embed=discord.Embed(title="Schedule Bot", url="https://github.com/UserBlackBox/schedule-bot", description="Discord bot for timetable information based on the TDSB 2020 quadmester model", color=0x0160a7)
     embed.set_thumbnail(url="https://cdn.discordapp.com/avatars/771927466267770910/700c2fe2da53caf2a60041e7d2bf21b4.png?size=2048")
     await ctx.send(embed=embed)
-
 
 logger = logging.getLogger('discord')
 logger.setLevel(logging.DEBUG)
