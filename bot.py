@@ -4,6 +4,7 @@ from discord.ext import commands
 import logging
 import json
 import datetime
+import typing
 import asyncio
 
 def getDay(year,month,day):
@@ -159,7 +160,111 @@ async def on_message(message):
             if content[1].upper() in set(data[str(message.channel.guild.id)]['users'][str(message.author.id)]['courses']):
                 await message.channel.send(str(message.author)+" is already in "+content[1].upper())
                 return
-            data[str(message.channel.guild.id)]['users'][str(message.author.id)]['courses'].append(content[1].upper())
+            await ctx.send(error)
+            return
+        print(error)
+
+    @commands.command(hidden=True)
+    @commands.has_permissions(administrator=True)
+    async def delcourse(self, ctx, course: str.upper):
+        if course not in data[str(ctx.guild.id)]['courses'].keys():
+            raise commands.BadArgument("Course **{0}** does not exist.".format(course))
+        del data[str(ctx.guild.id)]['courses'][course]
+        for i in data[str(ctx.guild.id)]['users'].keys():
+            try:
+                data[str(ctx.guild.id)]['users'][i]['courses'].remove(course)
+            except ValueError:
+                pass
+        await ctx.send("Course **{0}** has been deleted.".format(course))
+        updateFile()
+
+    @delcourse.error
+    async def delcourse_error(self, ctx, error):
+        if isinstance(error, commands.CheckFailure):
+            await ctx.send("This command is restricted to server admins.")
+            return
+        if isinstance(error, commands.MissingRequiredArgument):
+            await ctx.send("Please specify a course in the format `$delcourse [course]`")
+            return
+        if isinstance(error, commands.BadArgument):
+            await ctx.send(error)
+            return
+        print(error)
+
+class Events(commands.Cog):
+    def __init__(self, bot):
+        self.bot = bot
+
+    @commands.command(help="Adds an event to a course board")
+    async def addevent(self, ctx, course: str.upper, date: Date, *, event_title):
+        try:
+            if course not in data[str(ctx.guild.id)]['users'][str(ctx.author.id)]['courses']:
+                raise commands.BadArgument("You are not in this class.")
+        except KeyError:
+            raise commands.BadArgument("You are not in any classes. Use `$join` to join a course, and `$list` to see a list of available courses.")
+        try:
+            if 'events' not in data[str(ctx.guild.id)]['courses'][course].keys():
+                data[str(ctx.guild.id)]['courses'][course]['events'] = []
+                updateFile()
+        except KeyError:
+            raise commands.BadArgument("This class does not exist. Contact your admin to add any new courses.")
+        data[str(ctx.guild.id)]['courses'][course]['events'].append({'date':date.strftime('%Y/%m/%d'),'name':event_title})
+        data[str(ctx.guild.id)]['courses'][course]['events'].sort(key=lambda e: e['date'])
+        updateFile()
+        await ctx.send("Event **{0}** has been created".format(event_title))
+        #nikisu
+        if data[str(ctx.guild.id)]['users'][str(ctx.author.id)]['notifs']:
+            time = datetime.datetime.now()
+            sleep_time = str(date - time).split(" ")
+            day = 24*60*60
+            delay = 60*60*6
+            print(time)
+            print(date)
+            print(sleep_time[0])
+            print(day * sleep_time-delay)
+
+            await asyncio.sleep(5)
+
+            for i in data[str(ctx.guild.id)]['courses'][course]['events']:
+                if i['name'] == event_title and i['date'] == date:
+                    for j in data[str(ctx.guild.id)]['users']:
+                        if data[str(ctx.guild.id)]['users'][j]['notifs']:
+                            for k in data[str(ctx.guild.id)]['users'][j]['courses']:
+                                if course == k:
+                                    user = bot.get_user(int(j))
+                                    await user.send("UPCOMING EVENT: " + event_title)
+                                    break
+                    break
+            # while True:
+
+    @addevent.error
+    async def addevent_error(self, ctx, error):
+        if isinstance(error, commands.MissingRequiredArgument):
+            await ctx.send("This command has 3 arguments: `$addevent [code] [date] [event_title]`.")
+            return
+        if isinstance(error, commands.BadArgument):
+            await ctx.send(error)
+            return
+        print(error)
+
+    @commands.command(help="Removes an event from a course board")
+    async def delevent(self, ctx, course: str.upper, date: Date, *, event_title):
+        try:
+            if course not in data[str(ctx.guild.id)]['users'][str(ctx.author.id)]['courses']:
+                raise commands.BadArgument("You are not in this class.")
+        except KeyError:
+            raise commands.BadArgument("You are not in any classes. Use `$join` to join a course, and `$list` to see a list of available courses.")
+        try:
+            if 'events' not in data[str(ctx.guild.id)]['courses'][course].keys():
+                data[str(ctx.guild.id)]['courses'][course]['events'] = []
+                updateFile()
+        except KeyError:
+            raise commands.BadArgument("This class does not exist. Contact your admin to add any new courses.")
+        try:
+            #nikisu
+            # index = next((item for item in enumerate(data[str(message.channel.guild.id)]['courses'][content[1].upper()]['events']) if item["date"]==content[1] and item["name"]),None)
+            # print(index)
+            data[str(ctx.guild.id)]['courses'][course]['events'].remove({'date':date.strftime('%Y/%m/%d'),'name':event_title})
             updateFile()
             await message.channel.send(str(message.author)+" has been added to " + content[1].upper())
 
@@ -182,14 +287,36 @@ async def on_message(message):
         if str(message.author.id) not in set(data[str(message.channel.guild.id)]['users'].keys()):
             await message.channel.send('<@'+str(message.author.id)+'> you are not in any courses, to view a list of courses use `$list` and use `$join` to join the course')
             return
-        content = message.content.split()
-        date = datetime.datetime.today()
-        date = [date.year,date.month,date.day]
-        if len(content) > 1:
-            try:
-                date = datetime.datetime.strptime(content[1],'%Y-%m-%d')
-                date = [date.year,date.month,date.day]
-            except ValueError:
+        print(error)
+
+    #nikisu
+    @commands.command(help="Allows you to opt in or out of event reminders")
+    async def notifs(self, ctx):
+        try:
+            if data[str(ctx.guild.id)]['users'][str(ctx.author.id)]['notifs']:
+                data[str(ctx.guild.id)]['users'][str(ctx.author.id)]['notifs'] = 0
+                await ctx.send("You will no longer receive notifications for upcoming events.")
+            else:
+                data[str(ctx.guild.id)]['users'][str(ctx.author.id)]['notifs'] = 1
+                await ctx.send("You will now receive notifications for upcoming events.")
+            updateFile()
+        except KeyError:
+            data[str(ctx.guild.id)]['users'][str(ctx.author.id)]['notifs'] = 1
+            updateFile()
+
+    @notifs.error
+    async def notifs_error(self, ctx, error):
+        print(error)
+
+class Schedule(commands.Cog):
+    def __init__(self, bot):
+        self.bot = bot
+
+    @commands.command(help="Displays a personal schedule for today or any specified day")
+    async def schedule(self, ctx, date: typing.Optional[Date]=datetime.datetime.today().replace(hour=0, minute=0, second=0, microsecond=0), *, user: typing.Optional[discord.Member]):
+        if not user:
+            date_specified = False
+            for i in ctx.message.content.split():
                 try:
                     date = datetime.datetime.strptime(content[1],'%Y/%m/%d')
                     date = [date.year,date.month,date.day]
@@ -303,23 +430,31 @@ async def on_message(message):
                         break
                     output += i + ": *" + j['name'] + "*\n" # italics
         embed=discord.Embed(color=0x0160a7, title=header, description=output)
-        embed.set_author(name=str(message.author),icon_url=message.author.avatar_url)
-        await message.channel.send(embed=embed)
+        embed.set_author(name=str(user),icon_url=user.avatar_url)
+        await ctx.send(embed=embed)
 
-    elif message.content.lower().startswith('$week'): # return's users' schedule for the week. if someone else is mentioned, returned their schedule for the week
-        user = message.author
-        if len(message.mentions) >= 1:
-            user = message.mentions[0]
-        elif len(message.content.split()) > 1:
-            content = message.content.split()
-            if content[1].isdigit() and message.channel.guild.get_member(int(content[1])) != None:
-                    user = message.channel.guild.get_member(int(content[1]))
-            else:
-                user = message.channel.guild.get_member_named(" ".join(content[1:]))
-                if user == None:
-                    await message.channel.send("**"+" ".join(content[1:])+"** could not be found in the member list")
-                    return
-        date = datetime.datetime.today()
+    @schedule.error
+    async def schedule_error(self, ctx, error):
+        if isinstance(error, commands.BadArgument):
+            await ctx.send(error)
+            return
+        print(error)
+
+    @commands.command(help="Displays a personalized schedule for this or any specified week")
+    async def week(self, ctx, date: typing.Optional[Date]=datetime.datetime.today().replace(hour=0, minute=0, second=0, microsecond=0), *, user: typing.Optional[discord.Member]):
+        if not user:
+            date_specified = False
+            for i in ctx.message.content.split():
+                try:
+                    await Date().convert(ctx, i.strip())
+                    date_specified = True
+                    continue
+                except commands.ConversionError:
+                    if "$week" in i.lower():
+                        continue
+                    if i.strip():
+                        raise commands.BadArgument ("**" + ctx.message.content.split()[(2 if date_specified else 1):].join(" ") + "** could not be found in the member list.")
+            user = ctx.author
         if date.weekday() == 5:
             date += datetime.timedelta(days=2)
         elif date.weekday() == 6:
@@ -490,7 +625,7 @@ async def on_message(message):
                     except ValueError:
                         await message.channel.send("Please specify dates in `YYYY/MM/DD` or `YYYY-MM-DD`")
                         return
-                
+
                 if data[str(message.channel.guild.id)]['users'][str(message.author.id)]['notifs']==1:
                     time = datetime.datetime.now()
                     reminder_time = datetime.datetime.strptime(content[2], '%Y/%m/%d')
@@ -503,7 +638,7 @@ async def on_message(message):
                     print(day*sleep_time-delay)
 
                     await asyncio.sleep(5)
-                    
+
                     for j in data[str(message.channel.guild.id)]['courses'][content[1].upper()]['events']:
                         if j['name']==content[3] and j['date']==content[2]:
                             for i in data[str(message.channel.guild.id)]['users']:
@@ -514,7 +649,7 @@ async def on_message(message):
                                             await user.send("UPCOMING EVENT: "+content[3])
                                             break
                             break
-                        
+
                     # while True:
 
 
@@ -630,7 +765,7 @@ async def on_message(message):
                 updateFile()
         else:
             await message.channel.send("To receive to all notifications, enter 'notifs'. ")
-     
+
 
 logger = logging.getLogger('discord')
 logger.setLevel(logging.DEBUG)
