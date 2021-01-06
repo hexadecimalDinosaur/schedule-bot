@@ -284,10 +284,10 @@ class Events(commands.Cog):
                 updateFile()
         except KeyError:
             raise commands.BadArgument("This class does not exist. Contact your admin to add any new courses.")
-        data[str(message.channel.guild.id)]['courses'][course]['events'].append({'date':date.strftime('%Y/%m/%d'),'name':event_title})
+        data[str(ctx.guild.id)]['courses'][course]['events'].append({'date':date.strftime('%Y/%m/%d'),'name':event_title})
         data[str(ctx.guild.id)]['courses'][course]['events'].sort(key=lambda e: e['date'])
         updateFile()
-        await message.channel.send("Event **{0}** has been created".format(event_title))
+        await ctx.send("Event **{0}** has been created".format(event_title))
 
     @addevent.error
     async def addevent_error(self, ctx, error):
@@ -603,6 +603,7 @@ async def about(ctx):
     embed=discord.Embed(title="Schedule Bot", url="https://github.com/UserBlackBox/schedule-bot", description="Discord bot for timetable information based on the TDSB 2020 quadmester model", color=0x0160a7)
     embed.set_thumbnail(url="https://cdn.discordapp.com/avatars/771927466267770910/700c2fe2da53caf2a60041e7d2bf21b4.png?size=2048")
     await ctx.send(embed=embed)
+
 
 logger = logging.getLogger('discord')
 logger.setLevel(logging.DEBUG)
