@@ -407,7 +407,7 @@ class Schedule(commands.Cog):
                     await Date().convert(ctx, i.strip())
                     date_specified = True
                     continue
-                except commands.ConversionError:
+                except commands.BadArgument:
                     if "$schedule" in i.lower():
                         continue
                     if i.strip():
@@ -490,7 +490,7 @@ class Schedule(commands.Cog):
                     await Date().convert(ctx, i.strip())
                     date_specified = True
                     continue
-                except commands.ConversionError:
+                except commands.BadArgument:
                     if "$week" in i.lower():
                         continue
                     if i.strip():
