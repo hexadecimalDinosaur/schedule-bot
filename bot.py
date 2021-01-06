@@ -490,7 +490,7 @@ class Schedule(commands.Cog):
                     await Date().convert(ctx, i.strip())
                     date_specified = True
                     continue
-                except:
+                except commands.ConversionError:
                     if "$week" in i.lower():
                         continue
                     if i.strip():
