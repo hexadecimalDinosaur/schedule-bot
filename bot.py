@@ -91,14 +91,14 @@ class Courses(commands.Cog):
     async def courses(self, ctx, *, user: typing.Optional[discord.Member]):
         if not user:
             try:
-                user_attempt = [ctx.message.content.split()[1:]]
+                user_attempt = " ".join(ctx.message.content.split()[1:])
                 if user_attempt:
                     raise commands.BadArgument (message="**" + user_attempt + "** could not be found in the member list.")
             except IndexError:
                 pass
             user = ctx.author
         try:
-            quads = ["","","",""]
+            quads = ["", "", "", ""]
             for i in data[str(ctx.guild.id)]['users'][str(user.id)]['courses']:
                 quads[data[str(ctx.guild.id)]["courses"][i]["quad"]-1] += str(i+" - "+data[str(ctx.guild.id)]["courses"][i]["teacher"]+"\n")
             embed = discord.Embed(color=0x0160a7)
