@@ -147,7 +147,7 @@ class Courses(commands.Cog):
         try:
             data[str(ctx.guild.id)]['users'][str(ctx.author.id)]['courses'].remove(course)
             updateFile()
-            await ctx.send("{0} has been removed from {1}.".format(str(ctx.user), course))
+            await ctx.send(f"**{ctx.author}** has been removed from {course}.")
         except KeyError:
             raise commands.BadArgument ("You are not currently in any courses.")
         except ValueError:
