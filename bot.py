@@ -42,12 +42,14 @@ def getDay(year, month, day):
             return day
         start += datetime.timedelta(days=1)
 
-def getQuad(year=datetime.datetime.today().year, month=datetime.datetime.today().month, day=datetime.datetime.today().day):
+def getQuad(*date):
+    if not date:
+        date = (datetime.datetime.today().year, datetime.datetime.today().month, datetime.datetime.today().day)
     quad1 = datetime.datetime(2020,9,17)
     quad2 = datetime.datetime(2020,11,19)
     quad3 = datetime.datetime(2021,2,8)
     quad4 = datetime.datetime(2021,4,23)
-    date = datetime.datetime(year,month,day)
+    date = datetime.datetime(*date)
     if date >= quad4:
         return 4
     elif date >= quad3:
@@ -93,7 +95,7 @@ class Courses(commands.Cog):
             try:
                 user_attempt = " ".join(ctx.message.content.split()[1:])
                 if user_attempt:
-                    raise commands.BadArgument (message="**" + user_attempt + "** could not be found in the member list.")
+                    raise commands.BadArgument(message="**" + user_attempt + "** could not be found in the member list.")
             except IndexError:
                 pass
             user = ctx.author
@@ -107,10 +109,10 @@ class Courses(commands.Cog):
                 if len(quads[i]) > 0:
                     embed.add_field(name="Quad " + str(i + 1), value=quads[i])
             if not embed.fields:
-                raise commands.BadArgument ("**" + str(user) + "** does not have their courses added. To add courses, use `$join [code]` and use `$list` to see a list of available courses.")
+                raise commands.BadArgument (f"**{str(user)}** does not have their courses added. To add courses, use `$join [code]` and use `$list` to see a list of available courses.")
             await ctx.send(embed=embed)
         except KeyError:
-            raise commands.BadArgument ("**" + str(user) + "** does not have their courses added. To add courses, use `$join [code]` and use `$list` to see a list of available courses.")
+            raise commands.BadArgument (f"**{str(user)}** does not have their courses added. To add courses, use `$join [code]` and use `$list` to see a list of available courses.")
 
     @courses.error
     async def courses_error(self, ctx, error):
@@ -399,7 +401,9 @@ class Schedule(commands.Cog):
         self.bot = bot
 
     @commands.command(help="Displays a personal schedule for today or any specified day")
-    async def schedule(self, ctx, date: typing.Optional[Date]=datetime.datetime.today().replace(hour=0, minute=0, second=0, microsecond=0), *, user: typing.Optional[discord.Member]):
+    async def schedule(self, ctx, date: typing.Optional[Date], *, user: typing.Optional[discord.Member]):
+        if not date:
+            date = datetime.datetime.today().replace(hour=0, minute=0, second=0, microsecond=0)
         if not user:
             date_specified = False
             for i in ctx.message.content.split():
@@ -482,7 +486,9 @@ class Schedule(commands.Cog):
         print(error)
 
     @commands.command(help="Displays a personalized schedule for this or any specified week")
-    async def week(self, ctx, date: typing.Optional[Date]=datetime.datetime.today().replace(hour=0, minute=0, second=0, microsecond=0), *, user: typing.Optional[discord.Member]):
+    async def week(self, ctx, date: typing.Optional[Date], *, user: typing.Optional[discord.Member]):
+        if not date:
+            date = datetime.datetime.today().replace(hour=0, minute=0, second=0, microsecond=0)
         if not user:
             date_specified = False
             for i in ctx.message.content.split():
