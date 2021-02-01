@@ -197,7 +197,7 @@ class Courses(commands.Cog):
 
     @commands.command(hidden=True)
     @commands.has_permissions(administrator=True)
-    async def addcourse(ctx, course: str.upper, quad: int, teacher, days, hidden: typing.Optional[bool]=False):
+    async def addcourse(self, ctx, course: str.upper, quad: int, teacher, days, hidden: typing.Optional[bool]=False):
         if quad < 1 or quad > 4:
             raise commands.BadArgument("Quadmester must be between 1 and 4.")
         if course in data[str(ctx.guild.id)]['courses'].keys():
