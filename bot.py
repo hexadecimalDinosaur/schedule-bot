@@ -29,7 +29,7 @@ def getDay(date):
         if day == 5: day = 1
         if start == date:
             return day
-        start += datetime.timedelta(days=1)
+        start += timedelta(days=1)
 
 def getQuad(date=None):
     if not date:
@@ -478,9 +478,9 @@ class Schedule(commands.Cog):
                         raise commands.BadArgument (f"**{' '.join(ctx.message.content.split()[(2 if date_specified else 1):])}** could not be found in the member list.")
             user = ctx.author
         if date.weekday() == 5:
-            date += datetime.timedelta(days=2)
+            date += timedelta(days=2)
         elif date.weekday() == 6:
-            date += datetime.timedelta(days=1)
+            date += timedelta(days=1)
         else:
             date -= datetime.timedelta(days=date.weekday())
         quad = getQuad(date)
@@ -536,7 +536,7 @@ class Schedule(commands.Cog):
             title = date.strftime('%A')
             if day != 'holiday': title += " - Day {}".format(day)
             embed.add_field(name=title, value=output, inline=False)
-            date += datetime.timedelta(days=1)
+            date += timedelta(days=1)
         embed.set_author(name=str(user),icon_url=user.avatar_url)
         await ctx.send(embed=embed)
 
