@@ -3,7 +3,9 @@ import discord
 import json
 import logging
 import typing
+import random
 from discord.ext import commands
+from discord.utils import get
 
 QUADS = [datetime.date(2020, 9, 17), datetime.date(2020, 11, 19), datetime.date(2021, 2, 8), datetime.date(2021, 4, 23)]
 EXCLUDE = set(datetime.date(*date) for date in [(2020, 10, 12),  (2020, 11, 19),  (2020, 11, 20),  (2020, 12, 21),  (2020, 12, 22),  (2020, 12, 23),  (2020, 12, 24),  (2020, 12, 25),  (2020, 12, 28),  (2020, 12, 29),  (2020, 12, 30),  (2020, 12, 31),  (2021, 1, 1),  (2021, 2, 5),  (2021, 2, 12),  (2021, 2, 15),  (2021, 3, 15),  (2021, 3, 16),  (2021, 3, 17),  (2021, 3, 18),  (2021, 3, 19),  (2021, 4, 2),  (2021, 4, 5),  (2021, 5, 24),  (2021, 6, 29), (2021, 7, 1)])
@@ -61,6 +63,59 @@ class Courses(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
+    #delete once file has been updated
+    @commands.command(hidden=True)
+    @commands.has_permissions(administrator=True)
+    async def updatejson(self, ctx):
+        def check(message):
+            return message.content and message.author == ctx.author
+        for course in data[str(ctx.guild.id)]["courses"]:
+            try:
+                data[str(ctx.guild.id)]["courses"][course]["role"]
+            except KeyError:
+                await ctx.send(f"What role would you like to give {course}?")
+                message = await self.bot.wait_for('message', check=check)
+                data[str(ctx.guild.id)]["courses"][course]["role"] = message.content.lower()
+                role = get(ctx.guild.roles, name=data[str(ctx.guild.id)]["courses"][course]["role"])
+                if not role:
+                    await ctx.guild.create_role(name=data[str(ctx.guild.id)]["courses"][course]["role"], colour=discord.Colour.random())
+        updateFile()
+        await ctx.send("All courses have been given roles!")
+
+    @updatejson.error
+    async def updatejson_error(self, ctx, error):
+        if isinstance(error, commands.CheckFailure):
+            await ctx.send("This command is restricted to server admins.")
+            return
+        print(error)
+        await ctx.send("Some roles may not have been given due to an error.")
+
+    @commands.command(hidden=True)
+    #@commands.has_permissions(administrator=True)
+    async def updateroles(self, ctx):
+        for user in data[str(ctx.guild.id)]["users"].keys():
+            user = ctx.guild.get_member(int(user))
+            for course in data[str(ctx.guild.id)]["courses"]:
+                role = get(ctx.guild.roles, name=data[str(ctx.guild.id)]["courses"][course]["role"])
+                try:
+                    await user.remove_roles(role)
+                except AttributeError:
+                    pass
+            for course in data[str(ctx.guild.id)]["users"][str(user.id)]["courses"]:
+                if int(data[str(ctx.guild.id)]["courses"][course]["quad"]) != getQuad():
+                    continue
+                role = get(ctx.guild.roles, name=data[str(ctx.guild.id)]["courses"][course]["role"])
+                await user.add_roles(role)
+        await ctx.send("All users enrolled in courses have been given updated roles!")
+
+    @updateroles.error
+    async def updateroles_error(self, ctx, error):
+        if isinstance(error, commands.CheckFailure):
+            await ctx.send("This command is restricted to server admins.")
+            return
+        print(error)
+        await ctx.send("Please run $updatejson to ensure all courses have been given roles.")
+
     @commands.command(help="Displays yours or another user's courses")
     async def courses(self, ctx, *, user: typing.Optional[discord.Member]):
         if not user:
@@ -73,8 +128,8 @@ class Courses(commands.Cog):
             user = ctx.author
         try:
             quads = ["", "", "", ""]
-            for i in data[str(ctx.guild.id)]['users'][str(user.id)]['courses']:
-                quads[data[str(ctx.guild.id)]["courses"][i]["quad"]-1] += str(i+" - "+data[str(ctx.guild.id)]["courses"][i]["teacher"]+"\n")
+            for course in data[str(ctx.guild.id)]['users'][str(user.id)]['courses']:
+                quads[data[str(ctx.guild.id)]["courses"][course]["quad"]-1] += str(course + " - " + data[str(ctx.guild.id)]["courses"][course]["teacher"]+"\n")
             embed = discord.Embed(color=0x0160a7)
             embed.set_author(name=str(user), icon_url=user.avatar_url)
             for i in range(4):
@@ -101,10 +156,15 @@ class Courses(commands.Cog):
             data[str(ctx.guild.id)]['users'][str(ctx.author.id)] = {}
             data[str(ctx.guild.id)]['users'][str(ctx.author.id)]['courses'] = []
         if course in set(data[str(ctx.guild.id)]['users'][str(ctx.author.id)]['courses']):
-            raise commands.BadArgument("**{0}** is already in {1}.".format(str(ctx.author), course))
+            raise commands.BadArgument(f"**{str(ctx.author)}** is already in {course}.")
+        role = get(ctx.guild.roles, name=data[str(ctx.guild.id)]["courses"][course]["role"])
+        if role in ctx.author.roles:
+            raise commands.BadArgument(f"**{str(ctx.author)}** is already in a {role.name} course.")
+        if data[str(ctx.guild.id)]["courses"][course]["quad"] == getQuad():
+            await ctx.author.add_roles(role)
         data[str(ctx.guild.id)]['users'][str(ctx.author.id)]['courses'].append(course)
         updateFile()
-        await ctx.send("**{0}** has been added to {1}.".format(str(ctx.author), course))
+        await ctx.send(f"**{str(ctx.author)}** has been added to {course}.")
 
     @join.error
     async def join_error(self, ctx, error):
@@ -120,6 +180,8 @@ class Courses(commands.Cog):
     async def leave(self, ctx, course: str.upper):
         try:
             data[str(ctx.guild.id)]['users'][str(ctx.author.id)]['courses'].remove(course)
+            role = get(ctx.guild.roles, name=data[str(ctx.guild.id)]["courses"][course]["role"])
+            await ctx.author.remove_roles(role)
             updateFile()
             await ctx.send(f"**{ctx.author}** has been removed from {course}.")
         except KeyError:
@@ -169,7 +231,7 @@ class Courses(commands.Cog):
 
     @commands.command(hidden=True)
     @commands.has_permissions(administrator=True)
-    async def addcourse(self, ctx, course: str.upper, quad: int, teacher, days, hidden: typing.Optional[bool]=False):
+    async def addcourse(self, ctx, course: str.upper, quad: int, teacher, days, hidden: typing.Optional[bool], *, role_name: str.lower):
         if quad < 1 or quad > 4:
             raise commands.BadArgument("Quadmester must be between 1 and 4.")
         if course in data[str(ctx.guild.id)]['courses'].keys():
@@ -194,8 +256,13 @@ class Courses(commands.Cog):
         data[str(ctx.guild.id)]['courses'][course]['quad'] = quad
         data[str(ctx.guild.id)]['courses'][course]['events'] = []
         data[str(ctx.guild.id)]['courses'][course]['hidden'] = hidden
+        data[str(ctx.guild.id)]['courses'][course]['role'] = role_name
+        role = get(ctx.guild.roles, name=role_name)
+        if not role:
+            await ctx.guild.create_role(name=role_name, colour=discord.Colour.random())
+            role = get(ctx.guild.roles, name=role_name)
         updateFile()
-        await ctx.send("Course **{0}** has been created.".format(course))
+        await ctx.send(f"Course **{course}** has been created.")
 
     @addcourse.error
     async def addcourse_error(self, ctx, error):
@@ -218,13 +285,18 @@ class Courses(commands.Cog):
     async def delcourse(self, ctx, course: str.upper):
         if course not in data[str(ctx.guild.id)]['courses'].keys():
             raise commands.BadArgument("Course **{0}** does not exist.".format(course))
-        del data[str(ctx.guild.id)]['courses'][course]
-        for i in data[str(ctx.guild.id)]['users'].keys():
+        for user in data[str(ctx.guild.id)]['users'].keys():
             try:
-                data[str(ctx.guild.id)]['users'][i]['courses'].remove(course)
+                data[str(ctx.guild.id)]['users'][user]['courses'].remove(course)
+                user = ctx.guild.get_member(int(user))
+                role = get(ctx.guild.roles, name=data[str(ctx.guild.id)]['courses'][course]["role"])
+                await user.remove_roles(role)
             except ValueError:
                 pass
-        await ctx.send("Course **{0}** has been deleted.".format(course))
+            except AttributeError:
+                pass
+        del data[str(ctx.guild.id)]['courses'][course]
+        await ctx.send(f"Course **{course}** has been deleted.")
         updateFile()
 
     @delcourse.error
@@ -558,7 +630,6 @@ def updateFile():
 
 intents = discord.Intents.default()
 intents.members = True
-#client = discord.Client(intents=intents)
 bot = commands.Bot(command_prefix="$", case_insensitive=True, intents=intents)
 bot.add_cog(Courses(bot))
 bot.add_cog(Events(bot))
