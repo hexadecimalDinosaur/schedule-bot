@@ -3,41 +3,40 @@ import discord
 import json
 import logging
 import typing
-from datetime import timedelta
 from discord.ext import commands
 
-QUADS = [datetime.date(2020,9,17), datetime.date(2020,11,19), datetime.date(2021,2,8), datetime.date(2021,4,23)]
-EXCLUDE = set(datetime.date(date) for date in ['2020-10-12','2020-11-19','2020-11-20','2020-12-21','2020-12-22','2020-12-23','2020-12-24','2020-12-25','2020-12-28','2020-12-29','2020-12-30','2020-12-31','2021-01-01','2021-02-05','2021-02-12','2021-02-15','2021-03-15','2021-03-16','2021-03-17','2021-03-18','2021-03-19','2021-04-02','2021-04-05','2021-05-24','2021-06-29','2021-07-01'])
+QUADS = [datetime.date(2020, 9, 17), datetime.date(2020, 11, 19), datetime.date(2021, 2, 8), datetime.date(2021, 4, 23)]
+EXCLUDE = set(datetime.date(*date) for date in [(2020, 10, 12),  (2020, 11, 19),  (2020, 11, 20),  (2020, 12, 21),  (2020, 12, 22),  (2020, 12, 23),  (2020, 12, 24),  (2020, 12, 25),  (2020, 12, 28),  (2020, 12, 29),  (2020, 12, 30),  (2020, 12, 31),  (2021, 1, 1),  (2021, 2, 5),  (2021, 2, 12),  (2021, 2, 15),  (2021, 3, 15),  (2021, 3, 16),  (2021, 3, 17),  (2021, 3, 18),  (2021, 3, 19),  (2021, 4, 2),  (2021, 4, 5),  (2021, 5, 24),  (2021, 6, 29), (2021, 7, 1)])
 WEEKDAY_FORMATS = [['mon', 'monday'], ['tue', 'tues', 'tuesday'], ['wed', 'wednesday'], ['thu', 'thur', 'thurs', 'thursday'], ['fri', 'friday'], ['sat', 'saturday'], ['sun', 'sunday']]
 
 def getDay(date):
-    if date >= datetime.date(2021,7,1):
+    if date >= datetime.date(2021, 7, 1):
         return "end"
     if date.weekday() >= 5: # Saturday or Sunday
         return "weekend"
     if date in EXCLUDE:
         return "holiday"
-    start = QUADS[getQuad(date)-1]
+    start = QUADS[getQuad(date) - 1]
     day = 4
     while True:
-        if start.strftime("%Y-%m-%d") in EXCLUDE:
-            start += timedelta(days=1)
+        if start in EXCLUDE:
+            start += datetime.timedelta(days=1)
             continue
-        if start.strftime("%a") == "Sun" or start.strftime("%a") == "Sat":
-            start += timedelta(days=1)
+        if date.weekday() >= 5: # Saturday or Sunday
+            start += datetime.timedelta(days=1)
             continue
         day += 1
         if day == 5: day = 1
         if start == date:
             return day
-        start += timedelta(days=1)
+        start += datetime.timedelta(days=1)
 
 def getQuad(date=None):
     if not date:
         date = datetime.date.today()
     for i, quad in enumerate(QUADS[::-1]):
         if date >= quad:
-            return i+1
+            return 4 - i
 
 class Date(commands.Converter):
     async def convert(self, ctx, arg):
@@ -49,14 +48,14 @@ class Date(commands.Converter):
             try:
                 date = datetime.datetime.strptime(arg,'%Y-%m-%d').date()
             except ValueError:
-                raise commands.BadArgument("Please specify dates in `YYYY/MM/DD`, `YYYY-MM-DD`, or days of the week.")
-
-        today = datetime.date.today()
-        for i, f in enumerate(WEEKDAY_FORMATS):
-            if arg in f:
-                days = (i - today.weekday()) % 7
-                date = today + timedelta(days=days)
-        return date
+                today = datetime.date.today()
+                for i, f in enumerate(WEEKDAY_FORMATS):
+                    if arg in f:
+                        days = (i - today.weekday()) % 7
+                        date = today + datetime.timedelta(days=days)
+        if date:
+            return date
+        raise commands.BadArgument("Please specify dates in `YYYY/MM/DD`, `YYYY-MM-DD`, or days of the week.")
 
 class Courses(commands.Cog):
     def __init__(self, bot):
@@ -199,7 +198,7 @@ class Courses(commands.Cog):
         await ctx.send("Course **{0}** has been created.".format(course))
 
     @addcourse.error
-    async def addcourse_error(ctx, error):
+    async def addcourse_error(self, ctx, error):
         if isinstance(error, commands.CheckFailure):
             await ctx.send("This command is restricted to server admins.")
             return
@@ -360,7 +359,7 @@ class Events(commands.Cog):
             embed.set_footer(text="Use the `$addevent` command to add upcoming tests, assignments, etc.")
             await ctx.send(embed=embed)
         else:
-            raise commands.BadArgument("**{0}**'s courses have no upcoming events. To add an event, use `$addevent [code] [date] [event_title]`.".format(str(user)))
+            raise commands.BadArgument(f"**{str(user)}**'s courses have no upcoming events. To add an event, use `$addevent [code] [date] [event_title]`.")
 
     @getevents.error
     async def getevents_error(self, ctx, error):
@@ -403,35 +402,38 @@ class Schedule(commands.Cog):
         else:
             morning = ""
             afternoon = ""
-            for i in data[str(ctx.guild.id)]['users'][str(user.id)]['courses']:
-                if data[str(ctx.guild.id)]['courses'][i]['quad'] == quad:
-                    if 'events' not in data[str(ctx.guild.id)]['courses'][i].keys(): # check if events exist to avoid KeyError, otherwise create Key
-                        data[str(ctx.guild.id)]['courses'][i]['events'] = []
-                        updateFile()
-                    if data[str(ctx.guild.id)]['courses'][i]['in-school'] == day or data[str(ctx.guild.id)]['courses'][i]['independent'] == day:
-                        morning += i + " (" + data[str(ctx.guild.id)]['courses'][i]['teacher'] + ") - "
-                        morning += "In-School\n" if data[str(ctx.guild.id)]['courses'][i]['in-school'] == day else "Independent Learning\n"
-                        # append events for course on day in newline
-                        for j in data[str(ctx.guild.id)]['courses'][i]['events']:
-                            if datetime.datetime.strptime(j['date'], "%Y/%m/%d") < date: # skip all earlier events
-                                continue
-                            if datetime.datetime.strptime(j['date'], "%Y/%m/%d") > date: # events are date-sorted
-                                break
-                            morning += "*" + j['name'] + "*\n" # italics
-                    else:
-                        afternoon += i + " (" + data[str(ctx.guild.id)]['courses'][i]['teacher'] + ") - "
-                        afternoon += "Online Afternoon Class\n"
-                        # append events for course on day in newline
-                        for j in data[str(ctx.guild.id)]['courses'][i]['events']:
-                            if datetime.datetime.strptime(j['date'], "%Y/%m/%d") < date: # skip all earlier events
-                                continue
-                            if datetime.datetime.strptime(j['date'], "%Y/%m/%d") > date: # events are date-sorted
-                                break
-                            afternoon += "*" + j['name'] + "*\n" # italics
+            try:
+                for i in data[str(ctx.guild.id)]['users'][str(user.id)]['courses']:
+                    if data[str(ctx.guild.id)]['courses'][i]['quad'] == quad:
+                        if 'events' not in data[str(ctx.guild.id)]['courses'][i].keys(): # check if events exist to avoid KeyError, otherwise create Key
+                            data[str(ctx.guild.id)]['courses'][i]['events'] = []
+                            updateFile()
+                        if data[str(ctx.guild.id)]['courses'][i]['in-school'] == day or data[str(ctx.guild.id)]['courses'][i]['independent'] == day:
+                            morning += i + " (" + data[str(ctx.guild.id)]['courses'][i]['teacher'] + ") - "
+                            morning += "In-School\n" if data[str(ctx.guild.id)]['courses'][i]['in-school'] == day else "Independent Learning\n"
+                            # append events for course on day in newline
+                            for j in data[str(ctx.guild.id)]['courses'][i]['events']:
+                                if datetime.datetime.strptime(j['date'], "%Y/%m/%d").date() < date: # skip all earlier events
+                                    continue
+                                if datetime.datetime.strptime(j['date'], "%Y/%m/%d").date() > date: # events are date-sorted
+                                    break
+                                morning += "*" + j['name'] + "*\n" # italics
+                        else:
+                            afternoon += i + " (" + data[str(ctx.guild.id)]['courses'][i]['teacher'] + ") - "
+                            afternoon += "Online Afternoon Class\n"
+                            # append events for course on day in newline
+                            for j in data[str(ctx.guild.id)]['courses'][i]['events']:
+                                if datetime.datetime.strptime(j['date'], "%Y/%m/%d").date() < date: # skip all earlier events
+                                    continue
+                                if datetime.datetime.strptime(j['date'], "%Y/%m/%d").date() > date: # events are date-sorted
+                                    break
+                                afternoon += "*" + j['name'] + "*\n" # italics
+            except KeyError:
+                raise commands.BadArgument(f"**{str(user)}** is not in any courses. Use `$join` to join a course and `$list` to see a list of available courses.")
             output = morning + afternoon
             if output == "":
-                raise commands.BadArgument("**{0}** is not in any classes for quad {1}. Join courses with the `$join` command, and use `$list` to find available courses.".format(str(user), str(quad)))
-            header = "{0} - Quad {1} - Day {2}".format(datetime.datetime.strftime(date, "%Y/%m/%d"), quad, day)
+                raise commands.BadArgument(f"**{str(user)}** is not in any classes for quad {str(quad)}. Join courses with the `$join` command, and use `$list` to find available courses.")
+            header = "{0} - Quad {1} - Day {2}".format(datetime.date.strftime(date, "%Y/%m/%d"), quad, day)
         if day == 'weekend' or day == 'holiday' or day == 'end':
             # add event information
             for i in data[str(ctx.guild.id)]['users'][str(user.id)]['courses']:
@@ -442,9 +444,9 @@ class Schedule(commands.Cog):
                     continue
                 # append events for course on day in newline
                 for j in data[str(ctx.guild.id)]['courses'][i]['events']:
-                    if datetime.datetime.strptime(j['date'], "%Y/%m/%d") < date: # skip all earlier events
+                    if datetime.datetime.strptime(j['date'], "%Y/%m/%d").date() < date: # skip all earlier events
                         continue
-                    if datetime.datetime.strptime(j['date'], "%Y/%m/%d") > date: # events are date-sorted
+                    if datetime.datetime.strptime(j['date'], "%Y/%m/%d").date() > date: # events are date-sorted
                         break
                     output += i + ": *" + j['name'] + "*\n" # italics
         embed=discord.Embed(color=0x0160a7, title=header, description=output)
@@ -473,14 +475,14 @@ class Schedule(commands.Cog):
                     if "$week" in i.lower():
                         continue
                     if i.strip():
-                        raise commands.BadArgument ("**" + ctx.message.content.split()[(2 if date_specified else 1):].join(" ") + "** could not be found in the member list.")
+                        raise commands.BadArgument (f"**{' '.join(ctx.message.content.split()[(2 if date_specified else 1):])}** could not be found in the member list.")
             user = ctx.author
         if date.weekday() == 5:
-            date += timedelta(days=2)
+            date += datetime.timedelta(days=2)
         elif date.weekday() == 6:
-            date += timedelta(days=1)
+            date += datetime.timedelta(days=1)
         else:
-            date -= timedelta(days=date.weekday())
+            date -= datetime.timedelta(days=date.weekday())
         quad = getQuad(date)
         embed = discord.Embed(color=0x0160a7, title="Week of {0} - Quad {1}".format(date.strftime('%Y/%m/%d'), quad))
         for i in range(5):
@@ -528,20 +530,20 @@ class Schedule(commands.Cog):
                                         afternoon += "*" + k['name'] + "*\n" # italics
                     output = morning + afternoon
                 except KeyError:
-                    raise commands.BadArgument("**"+str(user)+"** has no courses added for this quad, to view a list of courses use `$list` and use `$join` to join the course.")
+                    raise commands.BadArgument(f"**{str(user)}** has no courses added for this quad, to view a list of courses use `$list` and use `$join` to join the course.")
             if len(output) == 0:
-                raise commands.BadArgument("**"+str(user)+"** has no courses added for this quad, to view a list of courses use `$list` and use `$join` to join the course.")
+                raise commands.BadArgument(f"**{str(user)}** has no courses added for this quad, to view a list of courses use `$list` and use `$join` to join the course.")
             title = date.strftime('%A')
             if day != 'holiday': title += " - Day {}".format(day)
             embed.add_field(name=title, value=output, inline=False)
-            date += timedelta(days=1)
+            date += datetime.timedelta(days=1)
         embed.set_author(name=str(user),icon_url=user.avatar_url)
         await ctx.send(embed=embed)
 
     @week.error
     async def week_error(self, ctx, error):
         if isinstance(error, commands.BadArgument):
-            ctx.send(error)
+            await ctx.send(error)
             return
         print(error)
 
