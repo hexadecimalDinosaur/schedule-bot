@@ -90,7 +90,7 @@ class Courses(commands.Cog):
         await ctx.send("Some roles may not have been given due to an error.")
 
     @commands.command(hidden=True)
-    #@commands.has_permissions(administrator=True)
+    @commands.has_permissions(administrator=True)
     async def updateroles(self, ctx):
         for user in data[str(ctx.guild.id)]["users"].keys():
             user = ctx.guild.get_member(int(user))
