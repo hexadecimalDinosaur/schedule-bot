@@ -23,7 +23,7 @@ def getDay(date):
         if start in EXCLUDE:
             start += datetime.timedelta(days=1)
             continue
-        if date.weekday() >= 5: # Saturday or Sunday
+        if start.weekday() >= 5: # Saturday or Sunday
             start += datetime.timedelta(days=1)
             continue
         day += 1
