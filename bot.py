@@ -50,10 +50,16 @@ class Date(commands.Converter):
                 date = datetime.datetime.strptime(arg,'%Y-%m-%d').date()
             except ValueError:
                 today = datetime.date.today()
+                weekday = False
                 for i, f in enumerate(WEEKDAY_FORMATS):
                     if arg in f:
                         days = (i - today.weekday()) % 7
                         date = today + datetime.timedelta(days=days)
+                        weekday = True
+                        continue
+                if not weekday:
+                    if arg in ['tmrw', 'tmr', 'tommorow']:
+                        date = today + datetime.timedelta(days=1)
         if date:
             return date
         raise commands.BadArgument("Please specify dates in `YYYY/MM/DD`, `YYYY-MM-DD`, or days of the week.")
@@ -157,8 +163,8 @@ class Courses(commands.Cog):
         if course in set(data[str(ctx.guild.id)]['users'][str(ctx.author.id)]['courses']):
             raise commands.BadArgument(f"**{str(ctx.author)}** is already in {course}.")
         role = get(ctx.guild.roles, name=data[str(ctx.guild.id)]["courses"][course]["role"])
-        if role in ctx.author.roles:
-            raise commands.BadArgument(f"**{str(ctx.author)}** is already in a {role.name} course.")
+        # if role in ctx.author.roles:
+        #     raise commands.BadArgument(f"**{str(ctx.author)}** is already in a {role.name} course.")
         if data[str(ctx.guild.id)]["courses"][course]["quad"] == getQuad():
             await ctx.author.add_roles(role)
         data[str(ctx.guild.id)]['users'][str(ctx.author.id)]['courses'].append(course)
