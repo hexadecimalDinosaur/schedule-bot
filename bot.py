@@ -166,7 +166,7 @@ class Courses(commands.Cog):
         # if role in ctx.author.roles:
         #     raise commands.BadArgument(f"**{str(ctx.author)}** is already in a {role.name} course.")
         if data[str(ctx.guild.id)]["courses"][course]["quad"] == getQuad():
-            await ctx.author.add_roles(role)
+            await ctx.author.add_roles(role, reason="Course Joined")
         data[str(ctx.guild.id)]['users'][str(ctx.author.id)]['courses'].append(course)
         updateFile()
         await ctx.send(f"**{str(ctx.author)}** has been added to {course}.")
@@ -186,7 +186,7 @@ class Courses(commands.Cog):
         try:
             data[str(ctx.guild.id)]['users'][str(ctx.author.id)]['courses'].remove(course)
             role = get(ctx.guild.roles, name=data[str(ctx.guild.id)]["courses"][course]["role"])
-            await ctx.author.remove_roles(role)
+            await ctx.author.remove_roles(role, reason="Course Left")
             updateFile()
             await ctx.send(f"**{ctx.author}** has been removed from {course}.")
         except KeyError:
